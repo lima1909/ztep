@@ -1,5 +1,6 @@
 const std = @import("std");
-const from = @import("ztep.zig").from;
+const extend = @import("ztep.zig").extend;
+const fromSlice = @import("ztep.zig").fromSlice;
 
 fn firstChar(in: []const u8) u8 {
     return in[0];
@@ -13,8 +14,8 @@ fn addLen(accum: usize, in: []const u8) usize {
     return accum + in.len;
 }
 
-test "from map" {
-    var it = from(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+test "extend map" {
+    var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .map(u8, firstChar);
 
     try std.testing.expectEqual('x', it.next().?);
@@ -23,8 +24,8 @@ test "from map" {
     try std.testing.expectEqual(null, it.next());
 }
 
-test "from filter" {
-    var it = from(std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' '))
+test "extend filter" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' '))
         .filter(isFirstCharUpper);
 
     try std.testing.expectEqualStrings("BB", it.next().?);
@@ -33,11 +34,11 @@ test "from filter" {
 }
 
 test "map-filter-enumerate" {
-    var itOrig = from(std.mem.tokenizeScalar(u8, "x BB ccc", ' '));
+    var itOrig = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '));
     try std.testing.expectEqualStrings("x", itOrig.iter().peek().?);
     try std.testing.expectEqualStrings("x", itOrig.next().?);
 
-    var it = from(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+    var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .map(u8, firstChar)
         .filter(std.ascii.isLower)
         .enumerate();
@@ -48,7 +49,7 @@ test "map-filter-enumerate" {
 }
 
 test "filter-map" {
-    var it = from(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+    var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .filter(isFirstCharUpper)
         .map(u8, firstChar);
 
@@ -57,7 +58,7 @@ test "filter-map" {
 }
 
 test "filter-fold" {
-    const len = from(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+    const len = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .filter(isFirstCharUpper)
         .fold(usize, 0, addLen);
 
@@ -65,9 +66,30 @@ test "filter-fold" {
 }
 
 test "filter-count" {
-    const count = from(std.mem.tokenizeScalar(u8, "x BB ccc D", ' '))
+    const count = extend(std.mem.tokenizeScalar(u8, "x BB ccc D", ' '))
         .filter(isFirstCharUpper)
         .count();
 
     try std.testing.expectEqual(2, count);
+}
+
+test "from slice" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .enumerate();
+
+    try std.testing.expectEqualDeep(.{ 0, 'x' }, it.next().?);
+    try std.testing.expectEqualDeep(.{ 1, 'c' }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "from slice string" {
+    var it = fromSlice("xBc")
+        .filter(std.ascii.isLower)
+        .enumerate();
+
+    try std.testing.expectEqualDeep(.{ 0, 'x' }, it.next().?);
+    try std.testing.expectEqualDeep(.{ 1, 'c' }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
 }

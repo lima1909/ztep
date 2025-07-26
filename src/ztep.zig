@@ -3,8 +3,13 @@ const iters = @import("iters.zig");
 
 /// Create a Wrapper (extension) for the given Iterator.
 /// The given Iterator must have a method next with an optional return value (without error).
-pub fn from(iter: anytype) Iterator(@TypeOf(iter)) {
+pub fn extend(iter: anytype) Iterator(@TypeOf(iter)) {
     return Iterator(@TypeOf(iter)){ .it = iter };
+}
+
+/// Create a new Iterator for the given slice.
+pub fn fromSlice(comptime slice: anytype) Iterator(Slice(slice)) {
+    return Iterator(Slice(slice)){ .it = Slice(slice){ .items = slice } };
 }
 
 /// Is the Iterator Wrapper with extended methods, like filter, map, enumerate ...
@@ -34,7 +39,7 @@ pub fn Iterator(Iter: type) type {
 
         /// Transforms one iterator into another by a given mapping function.
         pub fn map(self: *const @This(), To: type, mapFn: *const fn (Item) To) Iterator(iters.Map(Iter, Item, To)) {
-            return from(iters.Map(Iter, Item, To){
+            return extend(iters.Map(Iter, Item, To){
                 .it = &@constCast(self).it,
                 .mapFn = mapFn,
             });
@@ -42,7 +47,7 @@ pub fn Iterator(Iter: type) type {
 
         /// Creates an iterator which uses a function to determine if an element should be yielded.
         pub fn filter(self: *const @This(), filterFn: *const fn (Item) bool) Iterator(iters.Filter(Iter, Item)) {
-            return from(iters.Filter(Iter, Item){
+            return extend(iters.Filter(Iter, Item){
                 .it = &@constCast(self).it,
                 .filterFn = filterFn,
             });
@@ -50,7 +55,7 @@ pub fn Iterator(Iter: type) type {
 
         /// Creates an iterator which gives the current iteration count as well as the next value.
         pub fn enumerate(self: *const @This()) Iterator(iters.Enumerate(Iter, Item)) {
-            return from(iters.Enumerate(Iter, Item){
+            return extend(iters.Enumerate(Iter, Item){
                 .it = &@constCast(self).it,
             });
         }
@@ -63,7 +68,7 @@ pub fn Iterator(Iter: type) type {
         ///     }
         /// }.print)
         pub fn inspect(self: *const @This(), inspectFn: *const fn (Item) Item) Iterator(iters.Inspect(Iter, Item)) {
-            return from(iters.Inspect(Iter, Item){
+            return extend(iters.Inspect(Iter, Item){
                 .it = &@constCast(self).it,
                 .inspectFn = inspectFn(Item),
             });
@@ -96,6 +101,29 @@ pub fn Iterator(Iter: type) type {
         /// Returns the original (wrapped) Iterator for using this methods.
         pub fn iter(self: *@This()) *Iter {
             return &self.it;
+        }
+    };
+}
+
+pub fn Slice(slice: anytype) type {
+    const Item = switch (@typeInfo(@TypeOf(slice))) {
+        .array => |a| a.child,
+        .pointer => |p| switch (@typeInfo(p.child)) {
+            .array => |a| a.child,
+            else => @compileError("not a valid slice type: " ++ @typeName(p)),
+        },
+        else => @compileError("this is not a valid slice type: " ++ @typeName(slice)),
+    };
+
+    return struct {
+        items: []const Item,
+        index: usize = 0,
+
+        pub fn next(self: *@This()) ?Item {
+            if (self.index == self.items.len) return null;
+
+            defer self.index += 1;
+            return self.items[self.index];
         }
     };
 }

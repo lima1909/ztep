@@ -1,6 +1,6 @@
 <div align="center">
 
-# ztep: is an extension for Iterators written in ⚡ZIG ⚡
+# ZTEP 
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/lima1909/ztep/ci.yaml?style=for-the-badge)](https://github.com/lima1909/ztep/actions)
 ![License](https://img.shields.io/github/license/lima1909/ztep?style=for-the-badge)
@@ -8,7 +8,9 @@
 
 </div>
 
-`ztep` heavily inspired by the iterators in the Rust standard library [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html).
+`ztep` is an extension for Iterators written in ⚡ZIG ⚡.
+
+It is heavily inspired by the iterators in the Rust standard library [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html).
 
 
 ```zig
@@ -20,8 +22,21 @@ fn firstChar(in: []const u8) u8 {
     return in[0];
 }
 
-test "example" {
-    var it = iter.from(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+// if the Iterator exist, this Iterator can be extended
+test "extend" {
+    var it = iter.extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .enumerate();
+
+    try std.testing.expectEqualDeep(.{ 0, 'x' }, it.next().?);
+    try std.testing.expectEqualDeep(.{ 1, 'c' }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+// if the Iterator not exist, then can be a Iterator created from a given Slice
+test "from slice" {
+    var it = iter.fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
         .map(u8, firstChar)
         .filter(std.ascii.isLower)
         .enumerate();
