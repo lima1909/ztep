@@ -32,6 +32,7 @@ pub fn Iterator(Iter: type) type {
             return self.it.next();
         }
 
+        /// Transforms one iterator into another by a given mapping function.
         pub fn map(self: *const @This(), To: type, mapFn: *const fn (Item) To) Iterator(iters.Map(Iter, Item, To)) {
             return from(iters.Map(Iter, Item, To){
                 .it = &@constCast(self).it,
@@ -39,6 +40,7 @@ pub fn Iterator(Iter: type) type {
             });
         }
 
+        /// Creates an iterator which uses a function to determine if an element should be yielded.
         pub fn filter(self: *const @This(), filterFn: *const fn (Item) bool) Iterator(iters.Filter(Iter, Item)) {
             return from(iters.Filter(Iter, Item){
                 .it = &@constCast(self).it,
