@@ -98,6 +98,14 @@ pub fn Iterator(Iter: type) type {
             return counter;
         }
 
+        /// Creates an iterator that skips the first n elements.
+        pub fn skip(self: *const @This(), n: usize) Iterator(iters.Skip(Iter, Item)) {
+            return extend(iters.Skip(Iter, Item){
+                .it = &@constCast(self).it,
+                .n = n,
+            });
+        }
+
         /// Returns the original (wrapped) Iterator for using this methods.
         pub fn iter(self: *@This()) *Iter {
             return &self.it;

@@ -114,3 +114,66 @@ test "inspect" {
     try std.testing.expectEqualStrings("DDD", it.next().?);
     try std.testing.expectEqual(null, it.next());
 }
+
+pub fn Skip(Iter: type, Item: type) type {
+    return struct {
+        it: *Iter,
+        n: usize,
+
+        pub fn next(self: *@This()) ?Item {
+            for (0..self.n) |_| {
+                _ = self.it.next() orelse return null;
+            }
+            // disable skip
+            self.n = 0;
+
+            return self.it.next();
+        }
+    };
+}
+
+test "skip" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = Skip(@TypeOf(tokensIt), []const u8){
+        .it = &tokensIt,
+        .n = 2,
+    };
+
+    try std.testing.expectEqualStrings("ccc", it.next().?);
+    try std.testing.expectEqualStrings("DDD", it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "skip on the end" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = Skip(@TypeOf(tokensIt), []const u8){
+        .it = &tokensIt,
+        .n = 4,
+    };
+
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "skip after the end" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = Skip(@TypeOf(tokensIt), []const u8){
+        .it = &tokensIt,
+        .n = 5,
+    };
+
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "skip nothing" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = Skip(@TypeOf(tokensIt), []const u8){
+        .it = &tokensIt,
+        .n = 0,
+    };
+
+    try std.testing.expectEqualStrings("a", it.next().?);
+    try std.testing.expectEqualStrings("BB", it.next().?);
+    try std.testing.expectEqualStrings("ccc", it.next().?);
+    try std.testing.expectEqualStrings("DDD", it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}

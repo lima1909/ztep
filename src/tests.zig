@@ -93,3 +93,27 @@ test "from slice string" {
     try std.testing.expectEqualDeep(.{ 1, 'c' }, it.next().?);
     try std.testing.expectEqual(null, it.next());
 }
+
+test "from slice with skip" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .skip(1)
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .enumerate();
+
+    try std.testing.expectEqualDeep(.{ 0, 'c' }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "from slice with skip twice" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "y", "ccc" })
+        .skip(1)
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .enumerate()
+        .skip(1);
+
+    // { 1, 'c' }, because enumerate was execute ones
+    try std.testing.expectEqualDeep(.{ 1, 'c' }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}

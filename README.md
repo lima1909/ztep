@@ -58,4 +58,6 @@ Currently, the following iterators are available. More implementations will foll
 | `enumerate`   | Creates an iterator which gives the current iteration count as well as the next value.          |
 | `fold`        | Folds every element into an accumulator by applying an operation, returning the final result.   |
 | `count`       | Consumes the iterator, counting the number of iterations and returning it.                      |
+| `skip`        | Creates an iterator that skips the first n elements.                                            |
+| `inspect`     | This iterator do nothing, the purpose is for debugging.                                         |
 
