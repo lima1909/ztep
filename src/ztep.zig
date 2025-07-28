@@ -106,6 +106,14 @@ pub fn Iterator(Iter: type) type {
             });
         }
 
+        /// Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
+        pub fn take(self: *const @This(), n: usize) Iterator(iters.Take(Iter, Item)) {
+            return extend(iters.Take(Iter, Item){
+                .it = &@constCast(self).it,
+                .n = n,
+            });
+        }
+
         /// Returns the original (wrapped) Iterator for using this methods.
         pub fn iter(self: *@This()) *Iter {
             return &self.it;

@@ -117,3 +117,14 @@ test "from slice with skip twice" {
     try std.testing.expectEqualDeep(.{ 1, 'c' }, it.next().?);
     try std.testing.expectEqual(null, it.next());
 }
+
+test "from slice with take" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .take(2)
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .enumerate();
+
+    try std.testing.expectEqualDeep(.{ 0, 'x' }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}

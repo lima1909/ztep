@@ -51,13 +51,13 @@ test "from slice" {
 
 Currently, the following iterators are available. More implementations will follow.
 
-| Iterators     | Description                                                                                     |
-|---------------|-------------------------------------------------------------------------------------------------|
-| `map`         | Transforms one iterator into another by a given mapping function.                               |
-| `filter`      | Creates an iterator which uses a function to determine if an element should be yielded.         |
-| `enumerate`   | Creates an iterator which gives the current iteration count as well as the next value.          |
-| `fold`        | Folds every element into an accumulator by applying an operation, returning the final result.   |
-| `count`       | Consumes the iterator, counting the number of iterations and returning it.                      |
-| `skip`        | Creates an iterator that skips the first n elements.                                            |
-| `inspect`     | This iterator do nothing, the purpose is for debugging.                                         |
-
+| Iterators    | Description                                                                                            |
+|--------------|--------------------------------------------------------------------------------------------------------|
+| `map`        | Transforms one iterator into another by a given mapping function.                                      |
+| `filter`     | Creates an iterator which uses a function to determine if an element should be yielded.                |
+| `enumerate`  | Creates an iterator which gives the current iteration count as well as the next value.                 |
+| `fold`       | Folds every element into an accumulator by applying an operation, returning the final result.          |
+| `skip`       | Creates an iterator that skips the first n elements.                                                   |
+| `take`       | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
+| `count`      | Consumes the iterator, counting the number of iterations and returning it.                             |
+| `inspect`    | This iterator do nothing, the purpose is for debugging.                                                |
