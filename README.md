@@ -45,6 +45,18 @@ test "from slice" {
     try std.testing.expectEqualDeep(.{ 1, 'c' }, it.next().?);
     try std.testing.expectEqual(null, it.next());
 }
+
+// collect the result
+test "from slice collect " {
+    var collector = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .collect();
+
+    var buffer: [10]u8 = undefined;
+    const n = collector.collect(&buffer) orelse 0;
+    try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer[0..n]);
+}
 ```
 
 ### Iterators
@@ -61,3 +73,4 @@ Currently, the following iterators are available. More implementations will foll
 | `take`       | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
 | `count`      | Consumes the iterator, counting the number of iterations and returning it.                             |
 | `inspect`    | This iterator do nothing, the purpose is for debugging.                                                |
+| `collect`    | Returns a collector, which can read the result in a given array.                                       |

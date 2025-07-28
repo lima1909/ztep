@@ -128,3 +128,30 @@ test "from slice with take" {
     try std.testing.expectEqualDeep(.{ 0, 'x' }, it.next().?);
     try std.testing.expectEqual(null, it.next());
 }
+
+test "from slice collect" {
+    var collector = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .collect();
+
+    const result = &[_]u8{ 'x', 'c', 'd', 'e', 'f' };
+    var i: usize = 0;
+    var buffer: [1]u8 = undefined;
+    while (collector.collect(&buffer)) |n| {
+        try std.testing.expectEqual(1, n);
+        try std.testing.expectEqual(result[i], buffer[0]);
+        i += 1;
+    }
+}
+
+test "from slice collect once" {
+    var collector = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .collect();
+
+    var buffer: [7]u8 = undefined;
+    const n = collector.collect(&buffer) orelse 0;
+    try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer[0..n]);
+}

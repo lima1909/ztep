@@ -1,5 +1,6 @@
 const std = @import("std");
 const iters = @import("iters.zig");
+const coll = @import("collect.zig");
 
 /// Create a Wrapper (extension) for the given Iterator.
 /// The given Iterator must have a method next with an optional return value (without error).
@@ -35,6 +36,11 @@ pub fn Iterator(Iter: type) type {
 
         pub fn next(self: *@This()) ?Item {
             return self.it.next();
+        }
+
+        /// Returns the original (wrapped) Iterator for using this methods.
+        pub fn iter(self: *@This()) *Iter {
+            return &self.it;
         }
 
         /// Transforms one iterator into another by a given mapping function.
@@ -86,18 +92,6 @@ pub fn Iterator(Iter: type) type {
             return accum;
         }
 
-        /// Consumes the iterator, counting the number of iterations and returning it.
-        pub fn count(self: *const @This()) usize {
-            var it = &@constCast(self).it;
-            var counter: usize = 0;
-
-            while (it.next() != null) {
-                counter += 1;
-            }
-
-            return counter;
-        }
-
         /// Creates an iterator that skips the first n elements.
         pub fn skip(self: *const @This(), n: usize) Iterator(iters.Skip(Iter, Item)) {
             return extend(iters.Skip(Iter, Item){
@@ -114,9 +108,20 @@ pub fn Iterator(Iter: type) type {
             });
         }
 
-        /// Returns the original (wrapped) Iterator for using this methods.
-        pub fn iter(self: *@This()) *Iter {
-            return &self.it;
+        pub fn collect(self: *const @This()) coll.Collector(Iter, Item) {
+            return coll.Collector(Iter, Item){ .it = &@constCast(self).it };
+        }
+
+        /// Consumes the iterator, counting the number of iterations and returning it.
+        pub fn count(self: *const @This()) usize {
+            var it = &@constCast(self).it;
+            var counter: usize = 0;
+
+            while (it.next() != null) {
+                counter += 1;
+            }
+
+            return counter;
         }
     };
 }
@@ -146,5 +151,6 @@ pub fn Slice(slice: anytype) type {
 
 test {
     _ = @import("./iters.zig");
+    _ = @import("./collect.zig");
     _ = @import("./tests.zig");
 }
