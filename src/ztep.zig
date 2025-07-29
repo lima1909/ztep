@@ -112,6 +112,14 @@ pub fn Iterator(Iter: type) type {
             return coll.Collector(Iter, Item){ .it = &@constCast(self).it };
         }
 
+        /// Calls a function fn(Item) on each element of an iterator.
+        pub fn for_each(self: *const @This(), for_eachFn: *const fn (Item) void) void {
+            var it = &@constCast(self).it;
+            while (it.next()) |item| {
+                for_eachFn(item);
+            }
+        }
+
         /// Consumes the iterator, counting the number of iterations and returning it.
         pub fn count(self: *const @This()) usize {
             var it = &@constCast(self).it;

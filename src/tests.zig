@@ -155,3 +155,18 @@ test "from slice collect once" {
     const n = collector.collect(&buffer) orelse 0;
     try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer[0..n]);
 }
+
+test "from slice for_each" {
+    const forEachFn = struct {
+        fn forEach(item: struct { usize, u8 }) void {
+            const result = &[_]u8{ 'a', 'c', 'd', 'e', 'f' };
+            std.testing.expectEqual(result[item[0]], item[1]) catch unreachable;
+        }
+    }.forEach;
+
+    fromSlice(&[_][]const u8{ "a", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .enumerate()
+        .for_each(forEachFn);
+}

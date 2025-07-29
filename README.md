@@ -71,6 +71,7 @@ Currently, the following iterators are available. More implementations will foll
 | `fold`       | Folds every element into an accumulator by applying an operation, returning the final result.          |
 | `skip`       | Creates an iterator that skips the first n elements.                                                   |
 | `take`       | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
-| `count`      | Consumes the iterator, counting the number of iterations and returning it.                             |
 | `inspect`    | This iterator do nothing, the purpose is for debugging.                                                |
+| `count`      | Consumes the iterator, counting the number of iterations and returning it.                             |
+| `for_each`   | Calls a function fn(Item) on each element of an iterator.                                              |
 | `collect`    | Returns a collector, which can read the result in a given array.                                       |
