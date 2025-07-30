@@ -73,6 +73,7 @@ Currently, the following iterators are available. More implementations will foll
 | `take`           | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
 | `inspect`        | This iterator do nothing, the purpose is for debugging.                                                |
 | `count`          | Consumes the iterator, counting the number of iterations and returning it.                             |
+| `last`           | Calls a function fn(Item) on each element of an iterator.                                              |
 | `for_each`       | Calls a function fn(Item) on each element of an iterator.                                              |
 | `tryCollect`     | Collects all the items from an iterator into a given  buffer.                                          |
 | `tryCollectInto` | Collects all the items from an iterator into a given collection.                                       |

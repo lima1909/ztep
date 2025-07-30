@@ -66,11 +66,17 @@ test "filter-fold" {
 }
 
 test "filter-count" {
-    const count = extend(std.mem.tokenizeScalar(u8, "x BB ccc D", ' '))
-        .filter(isFirstCharUpper)
-        .count();
+    var it1 = extend(std.mem.tokenizeScalar(u8, "x BB ccc D", ' '))
+        .filter(isFirstCharUpper);
+    try std.testing.expectEqual(2, it1.count());
+    try std.testing.expectEqual(0, it1.count());
 
-    try std.testing.expectEqual(2, count);
+    var it2 = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower);
+
+    try std.testing.expectEqual(2, it2.count());
+    try std.testing.expectEqual(0, it2.count());
 }
 
 test "from slice" {
