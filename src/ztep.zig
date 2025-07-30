@@ -1,6 +1,5 @@
 const std = @import("std");
 const iters = @import("iters.zig");
-const coll = @import("collect.zig");
 
 /// Create a Wrapper (extension) for the given Iterator.
 /// The given Iterator must have a method next with an optional return value (without error).
@@ -108,13 +107,41 @@ pub fn Iterator(Iter: type) type {
             });
         }
 
-        pub fn collect(self: *const @This()) coll.Collector(Iter, Item) {
-            return coll.Collector(Iter, Item){ .it = &@constCast(self).it };
+        /// Collects all the items from an iterator into a given collection (like: ArrayList, BoundedArray, HashMap, ...).
+        pub fn tryCollectInto(
+            self: *const @This(),
+            containerPtr: anytype,
+            iterFn: *const fn (@TypeOf(containerPtr), Item) anyerror!void,
+        ) anyerror!usize {
+            var it = &@constCast(self).it;
+            var index: usize = 0;
+
+            while (it.next()) |item| {
+                try iterFn(containerPtr, item);
+                index += 1;
+            }
+
+            return index;
+        }
+
+        /// Collects all the items from an iterator into a given Buffer.
+        pub fn tryCollect(self: *const @This(), buffer: []Item) anyerror!usize {
+            var it = &@constCast(self).it;
+
+            var index: usize = 0;
+
+            while (it.next()) |item| {
+                buffer[index] = item;
+                index += 1;
+            }
+
+            return index;
         }
 
         /// Calls a function fn(Item) on each element of an iterator.
         pub fn for_each(self: *const @This(), for_eachFn: *const fn (Item) void) void {
             var it = &@constCast(self).it;
+
             while (it.next()) |item| {
                 for_eachFn(item);
             }
@@ -159,6 +186,5 @@ pub fn Slice(slice: anytype) type {
 
 test {
     _ = @import("./iters.zig");
-    _ = @import("./collect.zig");
     _ = @import("./tests.zig");
 }

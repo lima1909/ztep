@@ -12,17 +12,18 @@
 
 It is heavily inspired by the iterators in the Rust standard library [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html).
 
+## Examples
+
+### Extend a zig-std-iterator: `std.mem.TokenIterator`
 
 ```zig
 const std = @import("std");
 const iter = @import("ztep");
 
-// create a map function, to extract the first char from a string
 fn firstChar(in: []const u8) u8 {
     return in[0];
 }
 
-// if the Iterator exist, this Iterator can be extended
 test "extend" {
     var it = iter.extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .map(u8, firstChar)
@@ -33,8 +34,18 @@ test "extend" {
     try std.testing.expectEqualDeep(.{ 1, 'c' }, it.next().?);
     try std.testing.expectEqual(null, it.next());
 }
+```
 
-// if the Iterator not exist, then can be a Iterator created from a given Slice
+### Create an Iterator for a given Slice
+
+```zig
+const std = @import("std");
+const iter = @import("ztep");
+
+fn firstChar(in: []const u8) u8 {
+    return in[0];
+}
+
 test "from slice" {
     var it = iter.fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
         .map(u8, firstChar)
@@ -45,33 +56,23 @@ test "from slice" {
     try std.testing.expectEqualDeep(.{ 1, 'c' }, it.next().?);
     try std.testing.expectEqual(null, it.next());
 }
-
-// collect the result
-test "from slice collect " {
-    var collector = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
-        .map(u8, firstChar)
-        .filter(std.ascii.isLower)
-        .collect();
-
-    var buffer: [10]u8 = undefined;
-    const n = collector.collect(&buffer) orelse 0;
-    try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer[0..n]);
-}
 ```
 
-### Iterators
+
+## Iterators
 
 Currently, the following iterators are available. More implementations will follow.
 
-| Iterators    | Description                                                                                            |
-|--------------|--------------------------------------------------------------------------------------------------------|
-| `map`        | Transforms one iterator into another by a given mapping function.                                      |
-| `filter`     | Creates an iterator which uses a function to determine if an element should be yielded.                |
-| `enumerate`  | Creates an iterator which gives the current iteration count as well as the next value.                 |
-| `fold`       | Folds every element into an accumulator by applying an operation, returning the final result.          |
-| `skip`       | Creates an iterator that skips the first n elements.                                                   |
-| `take`       | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
-| `inspect`    | This iterator do nothing, the purpose is for debugging.                                                |
-| `count`      | Consumes the iterator, counting the number of iterations and returning it.                             |
-| `for_each`   | Calls a function fn(Item) on each element of an iterator.                                              |
-| `collect`    | Returns a collector, which can read the result in a given array.                                       |
+| Iterators        | Description                                                                                            |
+|------------------|--------------------------------------------------------------------------------------------------------|
+| `map`            | Transforms one iterator into another by a given mapping function.                                      |
+| `filter`         | Creates an iterator which uses a function to determine if an element should be yielded.                |
+| `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                 |
+| `fold`           | Folds every element into an accumulator by applying an operation, returning the final result.          |
+| `skip`           | Creates an iterator that skips the first n elements.                                                   |
+| `take`           | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
+| `inspect`        | This iterator do nothing, the purpose is for debugging.                                                |
+| `count`          | Consumes the iterator, counting the number of iterations and returning it.                             |
+| `for_each`       | Calls a function fn(Item) on each element of an iterator.                                              |
+| `tryCollect`     | Collects all the items from an iterator into a given  buffer.                                          |
+| `tryCollectInto` | Collects all the items from an iterator into a given collection.                                       |

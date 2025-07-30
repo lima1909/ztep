@@ -129,31 +129,63 @@ test "from slice with take" {
     try std.testing.expectEqual(null, it.next());
 }
 
-test "from slice collect" {
-    var collector = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+test "from slice collect " {
+    var buffer: [7]u8 = undefined;
+    const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
         .map(u8, firstChar)
         .filter(std.ascii.isLower)
-        .collect();
+        .tryCollect(&buffer);
 
-    const result = &[_]u8{ 'x', 'c', 'd', 'e', 'f' };
-    var i: usize = 0;
-    var buffer: [1]u8 = undefined;
-    while (collector.collect(&buffer)) |n| {
-        try std.testing.expectEqual(1, n);
-        try std.testing.expectEqual(result[i], buffer[0]);
-        i += 1;
-    }
+    try std.testing.expectEqual(5, n);
+    try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer[0..n]);
 }
 
-test "from slice collect once" {
-    var collector = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+test "from slice collect BoundedArray" {
+    var buffer: std.BoundedArray(u8, 7) = try .init(0);
+
+    const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
         .map(u8, firstChar)
         .filter(std.ascii.isLower)
-        .collect();
+        .tryCollectInto(&buffer, std.BoundedArray(u8, 7).append);
 
-    var buffer: [7]u8 = undefined;
-    const n = collector.collect(&buffer) orelse 0;
-    try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer[0..n]);
+    try std.testing.expectEqual(5, n);
+    try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer.slice());
+}
+
+test "from slice collect ArrayList (alloc)" {
+    var list = std.ArrayList(u8).init(std.testing.allocator);
+    defer list.deinit();
+
+    const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .tryCollectInto(&list, std.ArrayList(u8).append);
+
+    try std.testing.expectEqual(5, n);
+    try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, list.items[0..n]);
+}
+
+test "from slice collect AutoHashMap (alloc)" {
+    var map = std.AutoHashMap(usize, u8).init(std.testing.allocator);
+    defer map.deinit();
+
+    const put = struct {
+        fn put(self: *std.AutoHashMap(usize, u8), item: struct { usize, u8 }) anyerror!void {
+            try self.put(item[0], item[1]);
+        }
+    }.put;
+
+    const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .enumerate()
+        .tryCollectInto(&map, put);
+
+    try std.testing.expectEqual(5, n);
+    const result = &[_]u8{ 'x', 'c', 'd', 'e', 'f' };
+    for (result, 0..) |r, i| {
+        try std.testing.expectEqual(r, map.get(i));
+    }
 }
 
 test "from slice for_each" {
