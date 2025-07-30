@@ -35,7 +35,7 @@ test "extend filter" {
 
 test "map-filter-enumerate" {
     var itOrig = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '));
-    try std.testing.expectEqualStrings("x", itOrig.iter().peek().?);
+    try std.testing.expectEqualStrings("x", itOrig.iter.peek().?);
     try std.testing.expectEqualStrings("x", itOrig.next().?);
 
     var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
@@ -129,7 +129,7 @@ test "from slice with take" {
     try std.testing.expectEqual(null, it.next());
 }
 
-test "from slice collect " {
+test "from slice try collect" {
     var buffer: [7]u8 = undefined;
     const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
         .map(u8, firstChar)
@@ -138,6 +138,19 @@ test "from slice collect " {
 
     try std.testing.expectEqual(5, n);
     try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer[0..n]);
+}
+
+test "from slice try collect IndexOutOfBound " {
+    var buffer: [3]u8 = undefined;
+    _ = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .tryCollect(&buffer) catch |err| {
+        try std.testing.expectEqual(err, error.IndexOutOfBound);
+        return;
+    };
+
+    unreachable;
 }
 
 test "from slice collect BoundedArray" {
@@ -201,4 +214,25 @@ test "from slice for_each" {
         .filter(std.ascii.isLower)
         .enumerate()
         .for_each(forEachFn);
+}
+
+test "last" {
+    const item = extend(std.mem.tokenizeScalar(u8, "a BB ccc dd e fff", ' '))
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .last();
+
+    try std.testing.expectEqual('f', item);
+
+    const item2 = fromSlice(&[_][]const u8{ "a", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .last();
+
+    try std.testing.expectEqual('f', item2);
+}
+
+test "last empty" {
+    try std.testing.expectEqual(null, extend(std.mem.tokenizeScalar(u8, "", ' ')).last());
+    try std.testing.expectEqual(null, fromSlice(&[_][]const u8{}).last());
 }

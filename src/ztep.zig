@@ -4,12 +4,12 @@ const iters = @import("iters.zig");
 /// Create a Wrapper (extension) for the given Iterator.
 /// The given Iterator must have a method next with an optional return value (without error).
 pub fn extend(iter: anytype) Iterator(@TypeOf(iter)) {
-    return Iterator(@TypeOf(iter)){ .it = iter };
+    return Iterator(@TypeOf(iter)){ .iter = iter };
 }
 
 /// Create a new Iterator for the given slice.
 pub fn fromSlice(comptime slice: anytype) Iterator(Slice(slice)) {
-    return Iterator(Slice(slice)){ .it = Slice(slice){ .items = slice } };
+    return Iterator(Slice(slice)){ .iter = Slice(slice){ .items = slice } };
 }
 
 /// Is the Iterator Wrapper with extended methods, like filter, map, enumerate ...
@@ -30,22 +30,21 @@ pub fn Iterator(Iter: type) type {
         else => |ty| @compileError("unsupported iterator method 'next' return type" ++ @typeName(ty)),
     };
 
+    // check, whether the Iterator has a nextBack method
+    const has_next_back = if (@hasDecl(Iter, "nextBack")) true else false;
+
     return struct {
-        it: Iter,
+        /// Returns the original (wrapped) Iterator for using this methods.
+        iter: Iter,
 
         pub fn next(self: *@This()) ?Item {
-            return self.it.next();
-        }
-
-        /// Returns the original (wrapped) Iterator for using this methods.
-        pub fn iter(self: *@This()) *Iter {
-            return &self.it;
+            return self.iter.next();
         }
 
         /// Transforms one iterator into another by a given mapping function.
         pub fn map(self: *const @This(), To: type, mapFn: *const fn (Item) To) Iterator(iters.Map(Iter, Item, To)) {
             return extend(iters.Map(Iter, Item, To){
-                .it = &@constCast(self).it,
+                .it = &@constCast(self).iter,
                 .mapFn = mapFn,
             });
         }
@@ -53,7 +52,7 @@ pub fn Iterator(Iter: type) type {
         /// Creates an iterator which uses a function to determine if an element should be yielded.
         pub fn filter(self: *const @This(), filterFn: *const fn (Item) bool) Iterator(iters.Filter(Iter, Item)) {
             return extend(iters.Filter(Iter, Item){
-                .it = &@constCast(self).it,
+                .it = &@constCast(self).iter,
                 .filterFn = filterFn,
             });
         }
@@ -61,7 +60,7 @@ pub fn Iterator(Iter: type) type {
         /// Creates an iterator which gives the current iteration count as well as the next value.
         pub fn enumerate(self: *const @This()) Iterator(iters.Enumerate(Iter, Item)) {
             return extend(iters.Enumerate(Iter, Item){
-                .it = &@constCast(self).it,
+                .it = &@constCast(self).iter,
             });
         }
 
@@ -74,27 +73,26 @@ pub fn Iterator(Iter: type) type {
         /// }.print)
         pub fn inspect(self: *const @This(), inspectFn: *const fn (Item) Item) Iterator(iters.Inspect(Iter, Item)) {
             return extend(iters.Inspect(Iter, Item){
-                .it = &@constCast(self).it,
+                .it = &@constCast(self).iter,
                 .inspectFn = inspectFn(Item),
             });
         }
 
         /// Folds every element into an accumulator by applying an operation, returning the final result.
         pub fn fold(self: *const @This(), To: type, init: To, foldFn: *const fn (To, Item) To) To {
-            var it = &@constCast(self).it;
-            var accum = init;
+            var it = &@constCast(self).iter;
 
+            var accum = init;
             while (it.next()) |item| {
                 accum = foldFn(accum, item);
             }
-
             return accum;
         }
 
         /// Creates an iterator that skips the first n elements.
         pub fn skip(self: *const @This(), n: usize) Iterator(iters.Skip(Iter, Item)) {
             return extend(iters.Skip(Iter, Item){
-                .it = &@constCast(self).it,
+                .it = &@constCast(self).iter,
                 .n = n,
             });
         }
@@ -102,7 +100,7 @@ pub fn Iterator(Iter: type) type {
         /// Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
         pub fn take(self: *const @This(), n: usize) Iterator(iters.Take(Iter, Item)) {
             return extend(iters.Take(Iter, Item){
-                .it = &@constCast(self).it,
+                .it = &@constCast(self).iter,
                 .n = n,
             });
         }
@@ -113,24 +111,26 @@ pub fn Iterator(Iter: type) type {
             containerPtr: anytype,
             iterFn: *const fn (@TypeOf(containerPtr), Item) anyerror!void,
         ) anyerror!usize {
-            var it = &@constCast(self).it;
-            var index: usize = 0;
+            var it = &@constCast(self).iter;
 
+            var index: usize = 0;
             while (it.next()) |item| {
                 try iterFn(containerPtr, item);
                 index += 1;
             }
-
             return index;
         }
 
         /// Collects all the items from an iterator into a given Buffer.
         pub fn tryCollect(self: *const @This(), buffer: []Item) anyerror!usize {
-            var it = &@constCast(self).it;
+            var it = &@constCast(self).iter;
 
             var index: usize = 0;
+            const len = buffer.len;
 
             while (it.next()) |item| {
+                if (index == len) return error.IndexOutOfBound;
+
                 buffer[index] = item;
                 index += 1;
             }
@@ -140,22 +140,34 @@ pub fn Iterator(Iter: type) type {
 
         /// Calls a function fn(Item) on each element of an iterator.
         pub fn for_each(self: *const @This(), for_eachFn: *const fn (Item) void) void {
-            var it = &@constCast(self).it;
+            var it = &@constCast(self).iter;
 
             while (it.next()) |item| {
                 for_eachFn(item);
             }
         }
 
+        /// Consumes the iterator, returning the last element.
+        pub fn last(self: *const @This()) ?Item {
+            var it = &@constCast(self).iter;
+
+            if (has_next_back) return it.nextBack();
+
+            var item: ?Item = null;
+            while (it.next()) |i| {
+                item = i;
+            }
+            return item;
+        }
+
         /// Consumes the iterator, counting the number of iterations and returning it.
         pub fn count(self: *const @This()) usize {
-            var it = &@constCast(self).it;
-            var counter: usize = 0;
+            var it = &@constCast(self).iter;
 
+            var counter: usize = 0;
             while (it.next() != null) {
                 counter += 1;
             }
-
             return counter;
         }
     };
@@ -173,15 +185,68 @@ pub fn Slice(slice: anytype) type {
 
     return struct {
         items: []const Item,
-        index: usize = 0,
+        start: usize = 0,
+        end: usize = slice.len,
 
         pub fn next(self: *@This()) ?Item {
-            if (self.index == self.items.len) return null;
+            if (self.start >= self.end) return null;
 
-            defer self.index += 1;
-            return self.items[self.index];
+            const item = self.items[self.start];
+            self.start += 1;
+            return item;
+        }
+
+        pub fn nextBack(self: *@This()) ?Item {
+            if (self.start >= self.end) return null;
+
+            self.end -= 1;
+            return self.items[self.end];
         }
     };
+}
+
+test "slice next" {
+    var it = fromSlice(&[_][]const u8{ "a", "BB", "ccc" }).iter;
+
+    try std.testing.expectEqualStrings("a", it.next().?);
+    try std.testing.expectEqualStrings("BB", it.next().?);
+    try std.testing.expectEqualStrings("ccc", it.next().?);
+
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.nextBack());
+}
+
+test "slice nextBack" {
+    var it = fromSlice(&[_][]const u8{ "a", "BB", "ccc" }).iter;
+
+    try std.testing.expectEqualStrings("ccc", it.nextBack().?);
+    try std.testing.expectEqualStrings("BB", it.nextBack().?);
+    try std.testing.expectEqualStrings("a", it.nextBack().?);
+
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.nextBack());
+}
+
+test "slice next and nextBack" {
+    var it = fromSlice(&[_][]const u8{ "a", "BB", "ccc" }).iter;
+
+    try std.testing.expectEqualStrings("a", it.next().?);
+    try std.testing.expectEqualStrings("ccc", it.nextBack().?);
+    try std.testing.expectEqualStrings("BB", it.next().?);
+
+    try std.testing.expectEqual(null, it.nextBack());
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "slice next and nextBack 2" {
+    var it = fromSlice(&[_][]const u8{ "a", "BB", "ccc" }).iter;
+
+    try std.testing.expectEqualStrings("ccc", it.nextBack().?);
+    try std.testing.expectEqualStrings("a", it.next().?);
+    try std.testing.expectEqualStrings("BB", it.nextBack().?);
+
+    try std.testing.expectEqual(null, it.nextBack());
+    try std.testing.expectEqual(null, it.next());
 }
 
 test {
