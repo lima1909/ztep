@@ -30,9 +30,6 @@ pub fn Iterator(Iter: type) type {
         else => |ty| @compileError("unsupported iterator method 'next' return type" ++ @typeName(ty)),
     };
 
-    // check, whether the Iterator has a nextBack method
-    const has_next_back = if (@hasDecl(Iter, "nextBack")) true else false;
-
     return struct {
         /// Returns the original (wrapped) Iterator for using this methods.
         iter: Iter,
@@ -150,8 +147,6 @@ pub fn Iterator(Iter: type) type {
         /// Consumes the iterator, returning the last element.
         pub fn last(self: *const @This()) ?Item {
             var it = &@constCast(self).iter;
-
-            if (has_next_back) return it.nextBack();
 
             var item: ?Item = null;
             while (it.next()) |i| {

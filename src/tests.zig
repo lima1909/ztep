@@ -223,19 +223,19 @@ test "from slice for_each" {
 }
 
 test "last" {
-    const item = extend(std.mem.tokenizeScalar(u8, "a BB ccc dd e fff", ' '))
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB ccc dd e fff", ' '))
         .map(u8, firstChar)
-        .filter(std.ascii.isLower)
-        .last();
+        .filter(std.ascii.isLower);
 
-    try std.testing.expectEqual('f', item);
+    try std.testing.expectEqual('f', it.last());
+    try std.testing.expectEqual(null, it.last());
 
-    const item2 = fromSlice(&[_][]const u8{ "a", "BB", "ccc", "dd", "e", "fff" })
+    const it2 = fromSlice(&[_][]const u8{ "a", "BB", "ccc", "dd", "e", "fff" })
         .map(u8, firstChar)
-        .filter(std.ascii.isLower)
-        .last();
+        .filter(std.ascii.isLower);
 
-    try std.testing.expectEqual('f', item2);
+    try std.testing.expectEqual('f', it2.last());
+    try std.testing.expectEqual(null, it2.last());
 }
 
 test "last empty" {
