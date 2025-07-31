@@ -276,3 +276,18 @@ test "nth empty" {
     try std.testing.expectEqual(null, extend(std.mem.tokenizeScalar(u8, "", ' ')).nth(0));
     try std.testing.expectEqual(null, fromSlice(&[_][]const u8{}).nth(0));
 }
+
+test "find" {
+    var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '));
+
+    const found = it.find(struct {
+        fn find(in: []const u8) bool {
+            return std.mem.eql(u8, in, "BB");
+        }
+    }.find);
+    try std.testing.expectEqualStrings("BB", found.?);
+
+    // after find, the Iterator works fine, if there are more Items
+    try std.testing.expectEqualStrings("ccc", it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}

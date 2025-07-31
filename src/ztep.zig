@@ -152,6 +152,18 @@ pub fn Iterator(Iter: type) type {
             }
         }
 
+        /// Searches for an element of an iterator that satisfies a predicate.
+        pub fn find(self: *const @This(), predicateFn: *const fn (Item) bool) ?Item {
+            var it = &@constCast(self).iter;
+
+            while (it.next()) |item| {
+                if (predicateFn(item)) {
+                    return item;
+                }
+            }
+            return null;
+        }
+
         /// Consumes the iterator, returning the last element.
         pub fn last(self: *const @This()) ?Item {
             var it = &@constCast(self).iter;
