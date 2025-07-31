@@ -54,6 +54,14 @@ pub fn Iterator(Iter: type) type {
             });
         }
 
+        /// Creates an iterator that both filters and maps in one call.
+        pub fn filterMap(self: *const @This(), To: type, filterMapFn: *const fn (Item) ?To) Iterator(iters.FilterMap(Iter, Item, To)) {
+            return extend(iters.FilterMap(Iter, Item, To){
+                .it = &@constCast(self).iter,
+                .filterMapFn = filterMapFn,
+            });
+        }
+
         /// Creates an iterator which gives the current iteration count as well as the next value.
         pub fn enumerate(self: *const @This()) Iterator(iters.Enumerate(Iter, Item)) {
             return extend(iters.Enumerate(Iter, Item){

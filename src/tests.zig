@@ -10,6 +10,11 @@ fn isFirstCharUpper(in: []const u8) bool {
     return std.ascii.isUpper(in[0]);
 }
 
+fn isFirstCharUpperToChar(in: []const u8) ?u8 {
+    const first = in[0];
+    return if (std.ascii.isUpper(first)) first else null;
+}
+
 fn addLen(accum: usize, in: []const u8) usize {
     return accum + in.len;
 }
@@ -48,10 +53,18 @@ test "map-filter-enumerate" {
     try std.testing.expectEqual(null, it.next());
 }
 
-test "filter-map" {
+test "filter and map" {
     var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .filter(isFirstCharUpper)
         .map(u8, firstChar);
+
+    try std.testing.expectEqual('B', it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "filterMap" {
+    var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+        .filterMap(u8, isFirstCharUpperToChar);
 
     try std.testing.expectEqual('B', it.next().?);
     try std.testing.expectEqual(null, it.next());

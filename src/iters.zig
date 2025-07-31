@@ -62,6 +62,40 @@ test "filter" {
     try std.testing.expectEqual(null, it.next());
 }
 
+pub fn FilterMap(Iter: type, Item: type, To: type) type {
+    return struct {
+        it: *Iter,
+        filterMapFn: *const fn (Item) ?To,
+
+        pub fn next(self: *@This()) ?To {
+            while (self.it.next()) |item| {
+                if (self.filterMapFn(item)) |to| {
+                    return to;
+                }
+            }
+
+            return null;
+        }
+    };
+}
+
+test "filterMap" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = FilterMap(@TypeOf(tokensIt), []const u8, u8){
+        .it = &tokensIt,
+        .filterMapFn = struct {
+            fn firstCharUpper(in: []const u8) ?u8 {
+                const first = in[0];
+                return if (std.ascii.isUpper(first)) first else null;
+            }
+        }.firstCharUpper,
+    };
+
+    try std.testing.expectEqual('B', it.next().?);
+    try std.testing.expectEqual('D', it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
 pub fn Enumerate(Iter: type, Item: type) type {
     return struct {
         it: *Iter,

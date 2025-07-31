@@ -67,6 +67,7 @@ Currently, the following iterators are available. More implementations will foll
 |------------------|--------------------------------------------------------------------------------------------------------|
 | `map`            | Transforms one iterator into another by a given mapping function.                                      |
 | `filter`         | Creates an iterator which uses a function to determine if an element should be yielded.                |
+| `filterMap`      | Creates an iterator that both filters and maps in one call.                                            |
 | `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                 |
 | `fold`           | Folds every element into an accumulator by applying an operation, returning the final result.          |
 | `skip`           | Creates an iterator that skips the first n elements.                                                   |
