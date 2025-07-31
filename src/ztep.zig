@@ -155,6 +155,20 @@ pub fn Iterator(Iter: type) type {
             return item;
         }
 
+        /// Consumes the iterator, returning the nth element.
+        pub fn nth(self: *const @This(), n: usize) ?Item {
+            var it = &@constCast(self).iter;
+
+            var i: usize = 0;
+            while (it.next()) |item| {
+                if (i == n) {
+                    return item;
+                }
+                i += 1;
+            }
+            return null;
+        }
+
         /// Consumes the iterator, counting the number of iterations and returning it.
         pub fn count(self: *const @This()) usize {
             var it = &@constCast(self).iter;
@@ -180,19 +194,21 @@ pub fn Slice(slice: anytype) type {
 
     return struct {
         items: []const Item,
-        start: usize = 0,
+        front: usize = 0,
         end: usize = slice.len,
 
+        /// next from the front-side
         pub fn next(self: *@This()) ?Item {
-            if (self.start >= self.end) return null;
+            if (self.front >= self.end) return null;
 
-            const item = self.items[self.start];
-            self.start += 1;
+            const item = self.items[self.front];
+            self.front += 1;
             return item;
         }
 
+        /// next from the end-side
         pub fn nextBack(self: *@This()) ?Item {
-            if (self.start >= self.end) return null;
+            if (self.front >= self.end) return null;
 
             self.end -= 1;
             return self.items[self.end];

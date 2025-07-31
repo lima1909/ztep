@@ -242,3 +242,24 @@ test "last empty" {
     try std.testing.expectEqual(null, extend(std.mem.tokenizeScalar(u8, "", ' ')).last());
     try std.testing.expectEqual(null, fromSlice(&[_][]const u8{}).last());
 }
+
+test "nth" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB ccc dd e fff", ' '))
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower);
+
+    try std.testing.expectEqual('e', it.nth(3));
+    try std.testing.expectEqual('f', it.nth(0));
+    try std.testing.expectEqual(null, it.nth(0));
+
+    const it2 = fromSlice(&[_][]const u8{ "a", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower);
+
+    try std.testing.expectEqual(null, it2.nth(5));
+}
+
+test "nth empty" {
+    try std.testing.expectEqual(null, extend(std.mem.tokenizeScalar(u8, "", ' ')).nth(0));
+    try std.testing.expectEqual(null, fromSlice(&[_][]const u8{}).nth(0));
+}
