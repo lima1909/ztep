@@ -75,6 +75,6 @@ Currently, the following iterators are available. More implementations will foll
 | `count`          | Consumes the iterator, counting the number of iterations and returning it.                             |
 | `last`           | Calls a function fn(Item) on each element of an iterator.                                              |
 | `nth`            | Consumes the iterator, returning the nth element.                                                      |
-| `for_each`       | Calls a function fn(Item) on each element of an iterator.                                              |
+| `forEach`        | Calls a function fn(Item) on each element of an iterator.                                              |
 | `tryCollect`     | Collects all the items from an iterator into a given  buffer.                                          |
 | `tryCollectInto` | Collects all the items from an iterator into a given collection.                                       |

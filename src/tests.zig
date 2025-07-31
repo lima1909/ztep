@@ -207,7 +207,7 @@ test "from slice collect AutoHashMap (alloc)" {
     }
 }
 
-test "from slice for_each" {
+test "from slice forEach" {
     const forEachFn = struct {
         fn forEach(item: struct { usize, u8 }) void {
             const result = &[_]u8{ 'a', 'c', 'd', 'e', 'f' };
@@ -219,7 +219,7 @@ test "from slice for_each" {
         .map(u8, firstChar)
         .filter(std.ascii.isLower)
         .enumerate()
-        .for_each(forEachFn);
+        .forEach(forEachFn);
 }
 
 test "last" {

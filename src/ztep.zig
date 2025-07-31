@@ -136,11 +136,11 @@ pub fn Iterator(Iter: type) type {
         }
 
         /// Calls a function fn(Item) on each element of an iterator.
-        pub fn for_each(self: *const @This(), for_eachFn: *const fn (Item) void) void {
+        pub fn forEach(self: *const @This(), forEachFn: *const fn (Item) void) void {
             var it = &@constCast(self).iter;
 
             while (it.next()) |item| {
-                for_eachFn(item);
+                forEachFn(item);
             }
         }
 
