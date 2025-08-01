@@ -316,3 +316,22 @@ test "chain 3" {
     try std.testing.expectEqualStrings("F", it.next().?);
     try std.testing.expectEqual(null, it.next());
 }
+
+test "zip char" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB", ' '))
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .zip(fromSlice(&[_]u8{ 'c', 'D' }));
+
+    try std.testing.expectEqual(.{ 'a', 'c' }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "zip string" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB", ' '))
+        .zip(fromSlice(&[_][]const u8{ "e", "F" }));
+
+    try std.testing.expectEqualDeep(.{ "a", "e" }, it.next().?);
+    try std.testing.expectEqualDeep(.{ "BB", "F" }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}

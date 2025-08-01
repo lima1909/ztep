@@ -118,6 +118,14 @@ pub fn Iterator(Iter: type) type {
             });
         }
 
+        /// Zips up’ two iterators into a single iterator of pairs.
+        pub fn zip(self: *const @This(), otherIter: anytype) Iterator(iters.Zip(Iter, @TypeOf(otherIter), Item)) {
+            return extend(iters.Zip(Iter, @TypeOf(otherIter), Item){
+                .first = &@constCast(self).iter,
+                .second = otherIter,
+            });
+        }
+
         /// Collects all the items from an iterator into a given collection (like: ArrayList, BoundedArray, HashMap, ...).
         pub fn tryCollectInto(
             self: *const @This(),
