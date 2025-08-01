@@ -291,3 +291,28 @@ test "find" {
     try std.testing.expectEqualStrings("ccc", it.next().?);
     try std.testing.expectEqual(null, it.next());
 }
+
+test "chain" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB", ' '))
+        .chain(std.mem.tokenizeScalar(u8, "ccc DDD", ' '))
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower);
+
+    try std.testing.expectEqual('a', it.next().?);
+    try std.testing.expectEqual('c', it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "chain 3" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB", ' '))
+        .chain(std.mem.tokenizeScalar(u8, "ccc DDD", ' '))
+        .chain(fromSlice(&[_][]const u8{ "e", "F" }));
+
+    try std.testing.expectEqualStrings("a", it.next().?);
+    try std.testing.expectEqualStrings("BB", it.next().?);
+    try std.testing.expectEqualStrings("ccc", it.next().?);
+    try std.testing.expectEqualStrings("DDD", it.next().?);
+    try std.testing.expectEqualStrings("e", it.next().?);
+    try std.testing.expectEqualStrings("F", it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}

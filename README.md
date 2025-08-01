@@ -70,6 +70,7 @@ Currently, the following iterators are available. More implementations will foll
 | `filterMap`      | Creates an iterator that both filters and maps in one call.                                            |
 | `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                 |
 | `fold`           | Folds every element into an accumulator by applying an operation, returning the final result.          |
+| `chain`          | Takes two iterators and creates a new iterator over both in sequence.                                  |
 | `skip`           | Creates an iterator that skips the first n elements.                                                   |
 | `take`           | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
 | `inspect`        | This iterator do nothing, the purpose is for debugging.                                                |

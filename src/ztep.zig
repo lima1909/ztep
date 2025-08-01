@@ -110,6 +110,14 @@ pub fn Iterator(Iter: type) type {
             });
         }
 
+        /// Takes two iterators and creates a new iterator over both in sequence.
+        pub fn chain(self: *const @This(), otherIter: anytype) Iterator(iters.Chain(Iter, @TypeOf(otherIter), Item)) {
+            return extend(iters.Chain(Iter, @TypeOf(otherIter), Item){
+                .first = &@constCast(self).iter,
+                .second = otherIter,
+            });
+        }
+
         /// Collects all the items from an iterator into a given collection (like: ArrayList, BoundedArray, HashMap, ...).
         pub fn tryCollectInto(
             self: *const @This(),
