@@ -61,7 +61,16 @@ test "from slice" {
 
 ## Iterators
 
-Currently, the following iterators are available. More implementations will follow.
+### Create or extend a Iterator 
+
+| Function         | Description                                                                 |
+|------------------|-----------------------------------------------------------------------------|
+| `extend`         | Extend a given Iterator with the additional methods.                        |
+| `fromSlice`      | Create an Iterator from a given slice.                                      |
+| `range`          | Create an Iterator from a given start and end value (end is excluded).      |
+ 
+
+### The following iterators are available: 
 
 | Iterators        | Description                                                                                            |
 |------------------|--------------------------------------------------------------------------------------------------------|

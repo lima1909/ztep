@@ -1,6 +1,7 @@
 const std = @import("std");
 const extend = @import("ztep.zig").extend;
 const fromSlice = @import("ztep.zig").fromSlice;
+const range = @import("ztep.zig").range;
 
 fn firstChar(in: []const u8) u8 {
     return in[0];
@@ -334,4 +335,14 @@ test "zip string" {
     try std.testing.expectEqualDeep(.{ "a", "e" }, it.next().?);
     try std.testing.expectEqualDeep(.{ "BB", "F" }, it.next().?);
     try std.testing.expectEqual(null, it.next());
+}
+
+test "range filter-count" {
+    var it1 = range(u8, 'A', 'D').filter(std.ascii.isUpper);
+    try std.testing.expectEqual(3, it1.count());
+    try std.testing.expectEqual(0, it1.count());
+
+    var it2 = range(f32, 1.1, 5.3);
+    try std.testing.expectEqual(5, it2.count());
+    try std.testing.expectEqual(0, it2.count());
 }

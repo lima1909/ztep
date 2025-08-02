@@ -12,6 +12,11 @@ pub fn fromSlice(comptime slice: anytype) Iterator(Slice(slice)) {
     return Iterator(Slice(slice)){ .iter = Slice(slice){ .items = slice } };
 }
 
+/// Create a new Iterator for the given range, from start to exclude end.
+pub fn range(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
+    return Iterator(Range(Item)){ .iter = Range(Item){ .start = start, .end = end } };
+}
+
 /// Is the Iterator Wrapper with extended methods, like filter, map, enumerate ...
 pub fn Iterator(Iter: type) type {
     if (!@hasDecl(Iter, "next"))
@@ -294,6 +299,100 @@ test "slice next and nextBack 2" {
 
     try std.testing.expectEqual(null, it.nextBack());
     try std.testing.expectEqual(null, it.next());
+}
+
+test "slice i32 next and nextBack" {
+    var it = fromSlice(&[_]i32{ 1, 2, 3, 4, 5 }).iter;
+
+    try std.testing.expectEqualDeep(5, it.nextBack());
+    try std.testing.expectEqualDeep(1, it.next());
+    try std.testing.expectEqualDeep(4, it.nextBack());
+    try std.testing.expectEqualDeep(2, it.next());
+    try std.testing.expectEqualDeep(3, it.nextBack());
+    try std.testing.expectEqualDeep(null, it.next());
+    try std.testing.expectEqualDeep(null, it.nextBack());
+}
+
+pub fn Range(Item: type) type {
+    return struct {
+        start: Item,
+        end: Item,
+
+        /// next from the front-side
+        pub fn next(self: *@This()) ?Item {
+            if (self.start >= self.end) return null;
+
+            const start = self.start;
+            self.start += 1;
+            return start;
+        }
+
+        /// next from the end-side
+        pub fn nextBack(self: *@This()) ?Item {
+            if (self.start >= self.end) return null;
+
+            self.end -= 1;
+            return self.end;
+        }
+    };
+}
+
+test "range u8" {
+    var buffer: [4]u8 = undefined;
+    const n = try range(u8, 'a', 'd').tryCollect(&buffer);
+    try std.testing.expectEqualStrings("abc", buffer[0..n]);
+}
+
+test "range i32" {
+    var buffer: [10]i32 = undefined;
+    const n = try range(i32, 1, 6).tryCollect(&buffer);
+    try std.testing.expectEqualDeep(&[_]i32{ 1, 2, 3, 4, 5 }, buffer[0..n]);
+}
+
+test "range i32 next" {
+    var it = range(i32, 1, 5).iter;
+
+    try std.testing.expectEqualDeep(1, it.next());
+    try std.testing.expectEqualDeep(2, it.next());
+    try std.testing.expectEqualDeep(3, it.next());
+    try std.testing.expectEqualDeep(4, it.next());
+    try std.testing.expectEqualDeep(null, it.next());
+    try std.testing.expectEqualDeep(null, it.nextBack());
+}
+
+test "range i32 back" {
+    var it = range(i32, 1, 5).iter;
+
+    try std.testing.expectEqualDeep(4, it.nextBack());
+    try std.testing.expectEqualDeep(3, it.nextBack());
+    try std.testing.expectEqualDeep(2, it.nextBack());
+    try std.testing.expectEqualDeep(1, it.nextBack());
+    try std.testing.expectEqualDeep(null, it.next());
+    try std.testing.expectEqualDeep(null, it.nextBack());
+}
+
+test "range i32 next and back" {
+    var it = range(i32, 1, 5).iter;
+
+    try std.testing.expectEqualDeep(4, it.nextBack());
+    try std.testing.expectEqualDeep(1, it.next());
+    try std.testing.expectEqualDeep(3, it.nextBack());
+    try std.testing.expectEqualDeep(2, it.next());
+    try std.testing.expectEqualDeep(null, it.next());
+    try std.testing.expectEqualDeep(null, it.nextBack());
+}
+
+test "range i32 filter " {
+    var it = range(i32, 1, 10).filter(struct {
+        fn isEven(i: i32) bool {
+            return @mod(i, 2) == 0;
+        }
+    }.isEven);
+
+    try std.testing.expectEqualDeep(2, it.next());
+    try std.testing.expectEqualDeep(4, it.next());
+    try std.testing.expectEqualDeep(6, it.next());
+    try std.testing.expectEqualDeep(8, it.next());
 }
 
 test {
