@@ -112,6 +112,17 @@ pub fn Iterator(Iter: type) type {
             return accum;
         }
 
+        /// Reduces the elements to a single one, by repeatedly applying a reducing function.
+        pub fn reduce(self: *const @This(), reduceFn: *const fn (Item, Item) Item) ?Item {
+            var it = &@constCast(self).iter;
+
+            var accum = it.next() orelse return null;
+            while (it.next()) |item| {
+                accum = reduceFn(accum, item);
+            }
+            return accum;
+        }
+
         /// Creates an iterator that skips the first n elements.
         pub fn skip(self: *const @This(), n: usize) Iterator(iters.Skip(Iter, Item)) {
             return extend(iters.Skip(Iter, Item){

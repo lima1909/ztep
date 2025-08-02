@@ -80,6 +80,7 @@ test "from slice" {
 | `filterMap`      | Creates an iterator that both filters and maps in one call.                                            |
 | `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                 |
 | `fold`           | Folds every element into an accumulator by applying an operation, returning the final result.          |
+| `reduce`         | Reduces the elements to a single one, by repeatedly applying a reducing function.                      |
 | `chain`          | Takes two iterators and creates a new iterator over both in sequence.                                  |
 | `zip`            | Zips up’ two iterators into a single iterator of pairs.                                                |
 | `skip`           | Creates an iterator that skips the first n elements.                                                   |

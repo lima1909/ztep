@@ -79,6 +79,27 @@ test "filter-fold" {
     try std.testing.expectEqual(2, len);
 }
 
+test "filter-reduce" {
+    const sum = struct {
+        fn sum(a: i32, b: i32) i32 {
+            return a + b;
+        }
+    }.sum;
+
+    const s1 = fromSlice(&[_]i32{}).reduce(sum);
+    try std.testing.expectEqual(null, s1);
+
+    const s2 = fromSlice(&[_]i32{ 1, 3, 5, -1, -3, 7 }).reduce(sum);
+    try std.testing.expectEqual(12, s2);
+
+    const s3 = fromSlice("ab").reduce(struct {
+        fn sumU8(a: u8, b: u8) u8 {
+            return a + b;
+        }
+    }.sumU8);
+    try std.testing.expectEqual(195, s3);
+}
+
 test "filter-count" {
     var it1 = extend(std.mem.tokenizeScalar(u8, "x BB ccc D", ' '))
         .filter(isFirstCharUpper);
