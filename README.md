@@ -68,7 +68,6 @@ test "from slice" {
 | `extend`         | Extend a given Iterator with the additional methods.                                             |
 | `fromSlice`      | Create an Iterator from a given slice.                                                           |
 | `range`          | Create an Iterator from a given start and end value (end is excluded).                           |
-| `range2`         | Like `range`, but with configureable `step` and `end` can be included.                           |
 | `fromFn`         | Creates an custom iterator with the initialized (start) value and the provided (next) function.  |
  
 

@@ -327,15 +327,16 @@ pub fn range(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
     } };
 }
 
-/// Create a new Iterator for the given range, like range, but can configure the step and it the end inclusive.
-pub fn range2(Item: type, start: Item, end: Item, step: Item, inclusive: bool) Iterator(Range(Item)) {
-    return Iterator(Range(Item)){ .iter = Range(Item){
-        .start = start,
-        .end = end,
-        .step = step,
-        .inclusive = inclusive,
-    } };
-}
+// Create a new Iterator for the given range, like range, but can configure the step and it the end inclusive.
+// | `range2`         | Like `range`, but with configureable `step` and `end` can be included.                           |
+// pub fn range2(Item: type, start: Item, end: Item, step: Item, inclusive: bool) Iterator(Range(Item)) {
+//     return Iterator(Range(Item)){ .iter = Range(Item){
+//         .start = start,
+//         .end = end,
+//         .step = step,
+//         .inclusive = inclusive,
+//     } };
+// }
 
 pub fn Range(Item: type) type {
     return struct {
@@ -369,19 +370,19 @@ test "range u8" {
     try std.testing.expectEqualStrings("abc", buffer[0..n]);
 }
 
-test "range2 u8" {
-    var buffer: [4]u8 = undefined;
-    var n = try range2(u8, 'a', 'd', 2, true).tryCollect(&buffer);
-    try std.testing.expectEqualStrings("ac", buffer[0..n]);
-
-    n = try range2(u8, 'a', 'e', 2, true).tryCollect(&buffer);
-    try std.testing.expectEqual(3, n);
-    try std.testing.expectEqualStrings("ace", buffer[0..n]);
-
-    n = try range2(u8, 'a', 'c', 5, true).tryCollect(&buffer);
-    try std.testing.expectEqual(1, n);
-    try std.testing.expectEqualStrings("a", buffer[0..n]);
-}
+// test "range2 u8" {
+//     var buffer: [4]u8 = undefined;
+//     var n = try range2(u8, 'a', 'd', 2, true).tryCollect(&buffer);
+//     try std.testing.expectEqualStrings("ac", buffer[0..n]);
+//
+//     n = try range2(u8, 'a', 'e', 2, true).tryCollect(&buffer);
+//     try std.testing.expectEqual(3, n);
+//     try std.testing.expectEqualStrings("ace", buffer[0..n]);
+//
+//     n = try range2(u8, 'a', 'c', 5, true).tryCollect(&buffer);
+//     try std.testing.expectEqual(1, n);
+//     try std.testing.expectEqualStrings("a", buffer[0..n]);
+// }
 
 test "range i32" {
     var buffer: [10]i32 = undefined;
@@ -389,19 +390,19 @@ test "range i32" {
     try std.testing.expectEqualDeep(&[_]i32{ 1, 2, 3, 4, 5 }, buffer[0..n]);
 }
 
-test "range2 i32" {
-    var buffer: [10]i32 = undefined;
-    var n = try range2(i32, 1, 6, 1, true).tryCollect(&buffer);
-    try std.testing.expectEqualDeep(&[_]i32{ 1, 2, 3, 4, 5, 6 }, buffer[0..n]);
-
-    n = try range2(i32, 1, 6, 2, true).tryCollect(&buffer);
-    try std.testing.expectEqual(3, n);
-    try std.testing.expectEqualDeep(&[_]i32{ 1, 3, 5 }, buffer[0..n]);
-
-    n = try range2(i32, 1, 3, 5, true).tryCollect(&buffer);
-    try std.testing.expectEqual(1, n);
-    try std.testing.expectEqualDeep(&[_]i32{1}, buffer[0..n]);
-}
+// test "range2 i32" {
+//     var buffer: [10]i32 = undefined;
+//     var n = try range2(i32, 1, 6, 1, true).tryCollect(&buffer);
+//     try std.testing.expectEqualDeep(&[_]i32{ 1, 2, 3, 4, 5, 6 }, buffer[0..n]);
+//
+//     n = try range2(i32, 1, 6, 2, true).tryCollect(&buffer);
+//     try std.testing.expectEqual(3, n);
+//     try std.testing.expectEqualDeep(&[_]i32{ 1, 3, 5 }, buffer[0..n]);
+//
+//     n = try range2(i32, 1, 3, 5, true).tryCollect(&buffer);
+//     try std.testing.expectEqual(1, n);
+//     try std.testing.expectEqualDeep(&[_]i32{1}, buffer[0..n]);
+// }
 
 test "range i32 next" {
     var it = range(i32, 1, 5).iter;
@@ -448,6 +449,24 @@ test "range i32 filter " {
     try std.testing.expectEqualDeep(6, it.next());
     try std.testing.expectEqualDeep(8, it.next());
 }
+
+test "range i32 start > end" {
+    var it = range(i32, 5, 1).iter;
+
+    try std.testing.expectEqualDeep(null, it.next());
+    try std.testing.expectEqualDeep(null, it.nextBack());
+}
+
+// test "range2 i32 negative step" {
+//     var it = range2(i32, 1, 5, -2, true).iter;
+//
+//     try std.testing.expectEqualDeep(1, it.next());
+//     try std.testing.expectEqualDeep(7, it.nextBack());
+//     try std.testing.expectEqualDeep(-1, it.next());
+//     try std.testing.expectEqualDeep(9, it.nextBack());
+//     try std.testing.expectEqualDeep(-3, it.next());
+//     try std.testing.expectEqualDeep(11, it.nextBack());
+// }
 
 /// Creates an custom iterator with the initialized (start) value and the provided (next) function.
 pub fn fromFn(Item: type, init: Item, nextFn: *const fn (*Item) ?Item) Iterator(FromFn(Item)) {
