@@ -7,29 +7,6 @@ pub fn extend(iter: anytype) Iterator(@TypeOf(iter)) {
     return Iterator(@TypeOf(iter)){ .iter = iter };
 }
 
-/// Create a new Iterator for the given slice.
-pub fn fromSlice(comptime slice: anytype) Iterator(Slice(slice)) {
-    return Iterator(Slice(slice)){ .iter = Slice(slice){ .items = slice } };
-}
-
-/// Create a new Iterator for the given range, from start to exclude end.
-pub fn range(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
-    return Iterator(Range(Item)){ .iter = Range(Item){
-        .start = start,
-        .end = end,
-    } };
-}
-
-/// Create a new Iterator for the given range, like range, but can configure the step and it the end inclusive.
-pub fn range2(Item: type, start: Item, end: Item, step: Item, inclusive: bool) Iterator(Range(Item)) {
-    return Iterator(Range(Item)){ .iter = Range(Item){
-        .start = start,
-        .end = end,
-        .step = step,
-        .inclusive = inclusive,
-    } };
-}
-
 /// Is the Iterator Wrapper with extended methods, like filter, map, enumerate ...
 pub fn Iterator(Iter: type) type {
     if (!@hasDecl(Iter, "next"))
@@ -247,6 +224,11 @@ pub fn Iterator(Iter: type) type {
     };
 }
 
+/// Create a new Iterator for the given slice.
+pub fn fromSlice(comptime slice: anytype) Iterator(Slice(slice)) {
+    return Iterator(Slice(slice)){ .iter = Slice(slice){ .items = slice } };
+}
+
 pub fn Slice(slice: anytype) type {
     const Item = switch (@typeInfo(@TypeOf(slice))) {
         .array => |a| a.child,
@@ -335,6 +317,24 @@ test "slice i32 next and nextBack" {
     try std.testing.expectEqualDeep(3, it.nextBack());
     try std.testing.expectEqualDeep(null, it.next());
     try std.testing.expectEqualDeep(null, it.nextBack());
+}
+
+/// Create a new Iterator for the given range, from start to exclude end.
+pub fn range(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
+    return Iterator(Range(Item)){ .iter = Range(Item){
+        .start = start,
+        .end = end,
+    } };
+}
+
+/// Create a new Iterator for the given range, like range, but can configure the step and it the end inclusive.
+pub fn range2(Item: type, start: Item, end: Item, step: Item, inclusive: bool) Iterator(Range(Item)) {
+    return Iterator(Range(Item)){ .iter = Range(Item){
+        .start = start,
+        .end = end,
+        .step = step,
+        .inclusive = inclusive,
+    } };
 }
 
 pub fn Range(Item: type) type {
@@ -447,6 +447,46 @@ test "range i32 filter " {
     try std.testing.expectEqualDeep(4, it.next());
     try std.testing.expectEqualDeep(6, it.next());
     try std.testing.expectEqualDeep(8, it.next());
+}
+
+/// Creates an custom iterator with the initialized (start) value and the provided (next) function.
+pub fn fromFn(Item: type, init: Item, nextFn: *const fn (*Item) ?Item) Iterator(FromFn(Item)) {
+    return Iterator(FromFn(Item)){ .iter = FromFn(Item){
+        .value = init,
+        .callback = nextFn,
+    } };
+}
+
+pub fn FromFn(Item: type) type {
+    return struct {
+        value: Item,
+        callback: *const fn (*Item) ?Item,
+
+        pub fn next(self: *@This()) ?Item {
+            return self.callback(&self.value);
+        }
+    };
+}
+
+test "fromFn, simple counter until 5" {
+    var it = fromFn(i32, 0, struct {
+        fn next(v: *i32) ?i32 {
+            v.* += 1;
+            if (v.* <= 5)
+                return v.*
+            else
+                return null;
+        }
+    }.next)
+        .filter(struct {
+        fn isEven(i: i32) bool {
+            return @mod(i, 2) == 0;
+        }
+    }.isEven);
+
+    try std.testing.expectEqual(2, it.next().?);
+    try std.testing.expectEqual(4, it.next().?);
+    try std.testing.expectEqual(null, it.next());
 }
 
 test {
