@@ -508,6 +508,56 @@ test "fromFn, simple counter until 5" {
     try std.testing.expectEqual(null, it.next());
 }
 
+/// Creates a new iterator that N times repeats a given value.
+pub fn repeatN(Item: type, value: anytype, n: usize) Iterator(RepeatN(Item)) {
+    return Iterator(RepeatN(Item)){ .iter = RepeatN(Item){ .item = value, .ntimes = n } };
+}
+
+pub fn RepeatN(Item: type) type {
+    return struct {
+        item: Item,
+        ntimes: usize,
+        repeated: usize = 0,
+
+        pub fn next(self: *@This()) ?Item {
+            if (self.repeated >= self.ntimes) return null;
+
+            self.repeated += 1;
+            return self.item;
+        }
+    };
+}
+
+test "repeatN" {
+    var it = repeatN(i32, 42, 4);
+    try std.testing.expectEqual(42, it.next().?);
+    try std.testing.expectEqual(42, it.next().?);
+    try std.testing.expectEqual(42, it.next().?);
+    try std.testing.expectEqual(42, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+
+    const ptr: *const i32 = &42;
+    var it2 = repeatN(*const i32, ptr, 1);
+    try std.testing.expectEqual(ptr, it2.next().?);
+    try std.testing.expectEqual(null, it2.next());
+
+    var it3 = repeatN([]const u8, "abc_xyz", std.math.maxInt(usize));
+    for (0..1000) |_| {
+        try std.testing.expectEqualStrings("abc_xyz", it3.next().?);
+    }
+}
+
+test "repeatN filter" {
+    var it = repeatN(u8, 'a', 2).filter(std.ascii.isAlphabetic);
+    try std.testing.expectEqual('a', it.next().?);
+    try std.testing.expectEqual('a', it.next().?);
+    try std.testing.expectEqual(null, it.next());
+
+    it = repeatN(u8, '1', 2).filter(std.ascii.isAlphabetic);
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.next());
+}
+
 test {
     _ = @import("./iters.zig");
     _ = @import("./tests.zig");
