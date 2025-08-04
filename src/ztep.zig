@@ -508,6 +508,16 @@ test "fromFn, simple counter until 5" {
     try std.testing.expectEqual(null, it.next());
 }
 
+/// Creates an iterator that yields nothing.
+pub fn empty(Item: type, value: anytype) Iterator(RepeatN(Item)) {
+    return Iterator(RepeatN(Item)){ .iter = RepeatN(Item){ .item = value, .ntimes = 0 } };
+}
+
+/// Creates an iterator that yields an element exactly once.
+pub fn once(Item: type, value: anytype) Iterator(RepeatN(Item)) {
+    return Iterator(RepeatN(Item)){ .iter = RepeatN(Item){ .item = value, .ntimes = 1 } };
+}
+
 /// Creates a new iterator that N times repeats a given value.
 pub fn repeatN(Item: type, value: anytype, n: usize) Iterator(RepeatN(Item)) {
     return Iterator(RepeatN(Item)){ .iter = RepeatN(Item){ .item = value, .ntimes = n } };
@@ -526,6 +536,30 @@ pub fn RepeatN(Item: type) type {
             return self.item;
         }
     };
+}
+
+test "empty with filter" {
+    var it = empty(u8, 'x');
+    try std.testing.expectEqual(null, it.next());
+
+    var it2 = empty(u8, 'a').filter(std.ascii.isAlphabetic);
+    try std.testing.expectEqual(null, it2.next());
+
+    it2 = empty(u8, '1').filter(std.ascii.isAlphabetic);
+    try std.testing.expectEqual(null, it2.next());
+}
+
+test "once with filter" {
+    var it = once(u8, 'x');
+    try std.testing.expectEqual('x', it.next().?);
+    try std.testing.expectEqual(null, it.next());
+
+    var it2 = once(u8, 'a').filter(std.ascii.isAlphabetic);
+    try std.testing.expectEqual('a', it2.next().?);
+    try std.testing.expectEqual(null, it2.next());
+
+    it2 = once(u8, '1').filter(std.ascii.isAlphabetic);
+    try std.testing.expectEqual(null, it2.next());
 }
 
 test "repeatN" {

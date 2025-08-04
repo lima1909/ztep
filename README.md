@@ -68,6 +68,8 @@ test "from slice" {
 | `extend`         | Extend a given Iterator with the additional methods.                                             |
 | `fromSlice`      | Create an Iterator from a given slice.                                                           |
 | `range`          | Create an Iterator from a given start and end value (end is excluded).                           |
+| `empty`          | Creates an iterator that yields nothing.                                                         |
+| `once`           | Creates an iterator that yields an element exactly once.                                         |
 | `repeatN`        | Creates a new iterator that N times repeats a given value.                                       |
 | `fromFn`         | Creates an custom iterator with the initialized (start) value and the provided (next) function.  |
  
