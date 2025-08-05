@@ -1,4 +1,4 @@
-<div>
+<div align="center">
 
 # ZTEP 
 
@@ -65,13 +65,14 @@ test "from slice" {
 
 | Function         | Description                                                                                      |
 |------------------|--------------------------------------------------------------------------------------------------|
-| `extend`         | Extend a given Iterator with the additional methods.                                             |
-| `fromSlice`      | Create an Iterator from a given slice.                                                           |
-| `range`          | Create an Iterator from a given start and end value (end is excluded).                           |
 | `empty`          | Creates an iterator that yields nothing.                                                         |
-| `once`           | Creates an iterator that yields an element exactly once.                                         |
-| `repeatN`        | Creates a new iterator that N times repeats a given value.                                       |
+| `extend`         | Extend a given Iterator with the additional methods.                                             |
 | `fromFn`         | Creates an custom iterator with the initialized (start) value and the provided (next) function.  |
+| `fromSlice`      | Create an Iterator from a given slice.                                                           |
+| `once`           | Creates an iterator that yields an element exactly once.                                         |
+| `range`          | Create an Iterator from a given start and end value (end is excluded).                           |
+| `rangeIncl`      | Create an Iterator from a given start and end value (end is inclusive).                          |
+| `repeatN`        | Creates a new iterator that N times repeats a given value.                                       |
  
 
 #### The following iterators are available: 
