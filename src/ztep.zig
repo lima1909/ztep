@@ -116,6 +116,13 @@ pub fn Iterator(Iter: type) type {
             });
         }
 
+        /// Creates an iterator starting at the same point, but stepping by the given amount at each iteration.
+        pub fn stepBy(self: *const @This(), comptime step: usize) Iterator(iters.StepBy(Iter, Item, step)) {
+            return extend(iters.StepBy(Iter, Item, step){
+                .it = &@constCast(self).iter,
+            });
+        }
+
         /// Takes two iterators and creates a new iterator over both in sequence.
         pub fn chain(self: *const @This(), otherIter: anytype) Iterator(iters.Chain(Iter, @TypeOf(otherIter), Item)) {
             return extend(iters.Chain(Iter, @TypeOf(otherIter), Item){

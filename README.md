@@ -1,4 +1,4 @@
-<div align="center">
+<div>
 
 # ZTEP 
 
@@ -12,9 +12,9 @@
 
 It is heavily inspired by the iterators in the Rust standard library [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html).
 
-## Examples
+### Examples
 
-### Extend a zig-std-iterator: `std.mem.TokenIterator`
+#### Extend a zig-std-iterator: `std.mem.TokenIterator`
 
 ```zig
 const std = @import("std");
@@ -36,7 +36,7 @@ test "extend" {
 }
 ```
 
-### Create an Iterator for a given Slice
+#### Create an Iterator for a given Slice
 
 ```zig
 const std = @import("std");
@@ -59,9 +59,9 @@ test "from slice" {
 ```
 
 
-## Iterators
+### Iterators
 
-### Create or extend a Iterator 
+#### Create or extend a Iterator 
 
 | Function         | Description                                                                                      |
 |------------------|--------------------------------------------------------------------------------------------------|
@@ -74,25 +74,26 @@ test "from slice" {
 | `fromFn`         | Creates an custom iterator with the initialized (start) value and the provided (next) function.  |
  
 
-### The following iterators are available: 
+#### The following iterators are available: 
 
 | Iterators        | Description                                                                                            |
 |------------------|--------------------------------------------------------------------------------------------------------|
-| `map`            | Transforms one iterator into another by a given mapping function.                                      |
+| `chain`          | Takes two iterators and creates a new iterator over both in sequence.                                  |
+| `count`          | Consumes the iterator, counting the number of iterations and returning it.                             |
+| `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                 |
 | `filter`         | Creates an iterator which uses a function to determine if an element should be yielded.                |
 | `filterMap`      | Creates an iterator that both filters and maps in one call.                                            |
-| `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                 |
-| `fold`           | Folds every element into an accumulator by applying an operation, returning the final result.          |
-| `reduce`         | Reduces the elements to a single one, by repeatedly applying a reducing function.                      |
-| `chain`          | Takes two iterators and creates a new iterator over both in sequence.                                  |
-| `zip`            | Zips up’ two iterators into a single iterator of pairs.                                                |
-| `skip`           | Creates an iterator that skips the first n elements.                                                   |
-| `take`           | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
-| `inspect`        | This iterator do nothing, the purpose is for debugging.                                                |
-| `count`          | Consumes the iterator, counting the number of iterations and returning it.                             |
-| `last`           | Calls a function fn(Item) on each element of an iterator.                                              |
-| `nth`            | Consumes the iterator, returning the nth element.                                                      |
 | `find`           | Searches for an element of an iterator that satisfies a predicate.                                     |
+| `fold`           | Folds every element into an accumulator by applying an operation, returning the final result.          |
 | `forEach`        | Calls a function fn(Item) on each element of an iterator.                                              |
+| `inspect`        | This iterator do nothing, the purpose is for debugging.                                                |
+| `last`           | Calls a function fn(Item) on each element of an iterator.                                              |
+| `map`            | Transforms one iterator into another by a given mapping function.                                      |
+| `nth`            | Consumes the iterator, returning the nth element.                                                      |
+| `reduce`         | Reduces the elements to a single one, by repeatedly applying a reducing function.                      |
+| `skip`           | Creates an iterator that skips the first n elements.                                                   |
+| `stepBy`         | Creates an iterator starting at the same point, but stepping by the given amount at each iteration.    |
+| `take`           | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
 | `tryCollect`     | Collects all the items from an iterator into a given  buffer.                                          |
 | `tryCollectInto` | Collects all the items from an iterator into a given collection.                                       |
+| `zip`            | Zips up’ two iterators into a single iterator of pairs.                                                |

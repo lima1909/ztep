@@ -367,3 +367,25 @@ test "range filter-count" {
     try std.testing.expectEqual(5, it2.count());
     try std.testing.expectEqual(0, it2.count());
 }
+
+test "range filter-stepBy" {
+    var it = range(u8, 'A', 'H')
+        .filter(std.ascii.isUpper)
+        .stepBy(3);
+
+    try std.testing.expectEqual('A', it.next().?);
+    try std.testing.expectEqual('D', it.next().?);
+    try std.testing.expectEqual('G', it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "stepBy" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a bb CC d e", ' '))
+        .stepBy(2)
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower);
+
+    try std.testing.expectEqual('a', it.next().?);
+    try std.testing.expectEqual('e', it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
