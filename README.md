@@ -58,21 +58,44 @@ test "from slice" {
 }
 ```
 
+#### Extend a zig-std-iterator: `std.fs.Dir.Walker`, which next-method returns an error_union
+
+```zig
+const std = @import("std");
+const iter = @import("ztep");
+
+test "iterator with error" {
+    const dir = try std.fs.cwd().openDir(".", .{ .iterate = true });
+    var walker = try dir.walk(std.testing.allocator);
+    defer walker.deinit();
+
+    // errors are ignored and the next Item is yield
+    const build = iter.extendWithError(&walker, null).find(struct {
+        fn find(entry: std.fs.Dir.Walker.Entry) bool {
+            if (std.mem.eql(u8, "build.zig", entry.basename)) return true else return false;
+        }
+    }.find);
+
+    try std.testing.expectEqualStrings("build.zig", build.?.basename);
+}
+```
+
 
 ### Iterators
 
 #### Create or extend a Iterator 
 
-| Function         | Description                                                                                      |
-|------------------|--------------------------------------------------------------------------------------------------|
-| `empty`          | Creates an iterator that yields nothing.                                                         |
-| `extend`         | Extend a given Iterator with the additional methods.                                             |
-| `fromFn`         | Creates an custom iterator with the initialized (start) value and the provided (next) function.  |
-| `fromSlice`      | Create an Iterator from a given slice.                                                           |
-| `once`           | Creates an iterator that yields an element exactly once.                                         |
-| `range`          | Create an Iterator from a given start and end value (end is excluded).                           |
-| `rangeIncl`      | Create an Iterator from a given start and end value (end is inclusive).                          |
-| `repeatN`        | Creates a new iterator that N times repeats a given value.                                       |
+| Function          | Description                                                                                      |
+|-------------------|--------------------------------------------------------------------------------------------------|
+| `empty`           | Creates an iterator that yields nothing.                                                         |
+| `extend`          | Extend a given Iterator with the additional methods.                                             |
+| `extendWithError` | Extend an Iterator which has a next-method, which returns an error_union (next() anyerror!Item). |
+| `fromFn`          | Creates an custom iterator with the initialized (start) value and the provided (next) function.  |
+| `fromSlice`       | Create an Iterator from a given slice.                                                           |
+| `once`            | Creates an iterator that yields an element exactly once.                                         |
+| `range`           | Create an Iterator from a given start and end value (end is excluded).                           |
+| `rangeIncl`       | Create an Iterator from a given start and end value (end is inclusive).                          |
+| `repeatN`         | Creates a new iterator that N times repeats a given value.                                       |
  
 
 #### The following iterators are available: 

@@ -18,9 +18,6 @@ pub fn Iterator(Iter: type) type {
     };
 
     const Item = switch (@typeInfo(nextFn.return_type.?)) {
-        .error_union => |eu| switch (@typeInfo(eu.payload)) {
-            .Optional => |opt| opt.child,
-        },
         .optional => std.meta.Child(nextFn.return_type.?),
         else => |ty| @compileError("unsupported iterator method 'next' return type" ++ @typeName(ty)),
     };
@@ -445,17 +442,6 @@ test "range i32 start > end" {
     try std.testing.expectEqualDeep(null, it.nextBack());
 }
 
-// test "range2 i32 negative step" {
-//     var it = range2(i32, 1, 5, -2, true).iter;
-//
-//     try std.testing.expectEqualDeep(1, it.next());
-//     try std.testing.expectEqualDeep(7, it.nextBack());
-//     try std.testing.expectEqualDeep(-1, it.next());
-//     try std.testing.expectEqualDeep(9, it.nextBack());
-//     try std.testing.expectEqualDeep(-3, it.next());
-//     try std.testing.expectEqualDeep(11, it.nextBack());
-// }
-
 /// Creates an custom iterator with the initialized (start) value and the provided (next) function.
 pub fn fromFn(Item: type, init: Item, nextFn: *const fn (*Item) ?Item) Iterator(FromFn(Item)) {
     return Iterator(FromFn(Item)){ .iter = FromFn(Item){
@@ -515,12 +501,11 @@ pub fn RepeatN(Item: type) type {
     return struct {
         item: Item,
         ntimes: usize,
-        repeated: usize = 0,
 
         pub fn next(self: *@This()) ?Item {
-            if (self.repeated >= self.ntimes) return null;
+            if (self.ntimes == 0) return null;
 
-            self.repeated += 1;
+            self.ntimes -= 1;
             return self.item;
         }
     };
@@ -578,6 +563,84 @@ test "repeatN filter" {
     it = repeatN(u8, '1', 2).filter(std.ascii.isAlphabetic);
     try std.testing.expectEqual(null, it.next());
     try std.testing.expectEqual(null, it.next());
+}
+
+/// Extend an Iterator which has a next-method, which returns an error_union (next() anyerror!Item).
+///
+/// If handleError returns:
+///   - true means continue (ignore error and call next)
+///   - false, interrupt next and returns null
+pub fn extendWithError(iterPtr: anytype, handleError: ?*const fn (anyerror) bool) Iterator(IterWithError(@TypeOf(iterPtr))) {
+    return Iterator(IterWithError(@TypeOf(iterPtr))){ .iter = IterWithError(@TypeOf(iterPtr)){
+        .it = iterPtr,
+        .handleError = handleError orelse IterWithError(@TypeOf(iterPtr)).stopOnError,
+    } };
+}
+
+pub fn IterWithError(Iter: type) type {
+    const IterType = switch (@typeInfo(Iter)) {
+        .pointer => |p| p.child,
+        else => Iter,
+    };
+
+    if (!@hasDecl(IterType, "next"))
+        @compileError("missing iterator method 'next'");
+
+    const nextFn = switch (@typeInfo(@TypeOf(IterType.next))) {
+        .@"fn" => |func| func,
+        else => @compileError("iterator method 'next' is not a function"),
+    };
+
+    const Item = switch (@typeInfo(nextFn.return_type.?)) {
+        .error_union => |eu| switch (@typeInfo(eu.payload)) {
+            .optional => |opt| opt.child,
+            else => |ty| @compileError("unsupported iterator method 'next' return type" ++ @typeName(ty)),
+        },
+        else => |ty| @compileError("unsupported iterator method 'next' return type" ++ @typeName(ty)),
+    };
+
+    return struct {
+        it: Iter,
+        handleError: *const fn (anyerror) bool,
+        stop: bool = false,
+
+        pub fn next(self: *@This()) ?Item {
+            if (self.stop) return null;
+
+            while (true) {
+                const item = self.it.next() catch |err| {
+                    // execute the error handler
+                    // if return false, then break, else continue
+                    if (!self.handleError(err)) {
+                        self.stop = true;
+                        return null;
+                    }
+
+                    continue;
+                };
+
+                return item orelse return null;
+            }
+        }
+
+        pub fn stopOnError(_: anyerror) bool {
+            return false;
+        }
+    };
+}
+
+test "iterator with error" {
+    const dir = try std.fs.cwd().openDir(".", .{ .iterate = true });
+    var walker = try dir.walk(std.testing.allocator);
+    defer walker.deinit();
+
+    const build = extendWithError(&walker, null).find(struct {
+        fn find(entry: std.fs.Dir.Walker.Entry) bool {
+            if (std.mem.eql(u8, "build.zig", entry.basename)) return true else return false;
+        }
+    }.find);
+
+    try std.testing.expectEqualStrings("build.zig", build.?.basename);
 }
 
 test {

@@ -1,5 +1,6 @@
 const std = @import("std");
 const extend = @import("ztep.zig").extend;
+const extendWithError = @import("ztep.zig").extendWithError;
 const fromSlice = @import("ztep.zig").fromSlice;
 const range = @import("ztep.zig").range;
 
@@ -387,5 +388,43 @@ test "stepBy" {
 
     try std.testing.expectEqual('a', it.next().?);
     try std.testing.expectEqual('e', it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+pub const IteratorWithError = struct {
+    const innerArray = [_]usize{ 2, 3, 4, 5, 6 };
+    n: usize = 0,
+
+    pub fn next(self: *@This()) anyerror!?usize {
+        if (self.n >= innerArray.len) {
+            return null;
+        }
+
+        const i = innerArray[self.n];
+        self.n += 1;
+        if (i % 2 != 0) return error.NotEven;
+        return i;
+    }
+};
+
+test "iterator with error, no error handler" {
+    var it = extendWithError(IteratorWithError{}, null);
+
+    try std.testing.expectEqual(2, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.next());
+}
+
+pub fn ignoreErrors(_: anyerror) bool {
+    return true;
+}
+
+test "iterator with error, ignore errors" {
+    var it = extendWithError(IteratorWithError{}, ignoreErrors);
+
+    try std.testing.expectEqual(2, it.next().?);
+    try std.testing.expectEqual(4, it.next().?);
+    try std.testing.expectEqual(6, it.next().?);
+    try std.testing.expectEqual(null, it.next());
     try std.testing.expectEqual(null, it.next());
 }
