@@ -96,6 +96,7 @@ test "iterator with error" {
 | `range`           | Create an Iterator from a given start and end value (end is excluded).                           |
 | `rangeIncl`       | Create an Iterator from a given start and end value (end is inclusive).                          |
 | `repeatN`         | Creates a new iterator that N times repeats a given value.                                       |
+| `toIterator`      | Creates a Wrapper for a given Iterator, where the next-method has a different name.              |
  
 
 #### The following iterators are available: 

@@ -21,6 +21,29 @@ fn addLen(accum: usize, in: []const u8) usize {
     return accum + in.len;
 }
 
+test "extend" {
+    const csv = "a,b,c\nd,e,f";
+    var it = extend(std.mem.tokenizeScalar(u8, csv, '\n'))
+        .map(
+        [3][]const u8,
+        struct {
+            fn splitLine(line: []const u8) [3][]const u8 {
+                var col: [3][]const u8 = undefined;
+                var it = std.mem.tokenizeScalar(u8, line, ',');
+                for (0..3) |i| {
+                    col[i] = it.next().?;
+                }
+
+                return col;
+            }
+        }.splitLine,
+    );
+
+    try std.testing.expectEqualDeep([3][]const u8{ "a", "b", "c" }, it.next().?);
+    try std.testing.expectEqualDeep([3][]const u8{ "d", "e", "f" }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
 test "extend map" {
     var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .map(u8, firstChar);
