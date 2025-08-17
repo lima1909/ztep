@@ -365,3 +365,49 @@ test "StepBy" {
     try std.testing.expectEqualStrings("d", it3.next().?);
     try std.testing.expectEqual(null, it3.next());
 }
+
+pub fn Peekable(Iter: type, Item: type) type {
+    return struct {
+        iter: *Iter,
+        peeked: ?Item = null,
+
+        pub fn next(self: *@This()) ?Item {
+            if (self.peeked) |item| {
+                self.peeked = null;
+                return item;
+            }
+
+            return self.iter.next();
+        }
+
+        pub fn peek(self: *@This()) ?Item {
+            if (self.peeked) |item| {
+                return item;
+            }
+
+            if (self.iter.next()) |item| {
+                self.peeked = item;
+                return item;
+            }
+
+            return null;
+        }
+    };
+}
+
+test "peekable" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB", ' ');
+    var it = Peekable(@TypeOf(tokensIt), []const u8){
+        .iter = &tokensIt,
+    };
+
+    try std.testing.expectEqualStrings("a", it.peek().?);
+    try std.testing.expectEqualStrings("a", it.next().?);
+
+    try std.testing.expectEqualStrings("BB", it.peek().?);
+    try std.testing.expectEqualStrings("BB", it.peek().?);
+    try std.testing.expectEqualStrings("BB", it.next().?);
+
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.next());
+}

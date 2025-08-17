@@ -87,6 +87,22 @@ test "filter and map" {
     try std.testing.expectEqual(null, it.next());
 }
 
+test "two instances from the same Iterator" {
+    var it0 = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' ')).map(u8, firstChar);
+    try std.testing.expectEqual('x', it0.next().?);
+
+    var it1 = it0.filter(struct {
+        fn isFirstCharUpper(in: u8) bool {
+            return std.ascii.isUpper(in);
+        }
+    }.isFirstCharUpper);
+
+    try std.testing.expectEqual('B', it1.next().?);
+    try std.testing.expectEqual(null, it1.next());
+
+    try std.testing.expectEqual(null, it0.next());
+}
+
 test "filterMap" {
     var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .filterMap(u8, isFirstCharUpperToChar);
@@ -450,4 +466,37 @@ test "iterator with error, ignore errors" {
     try std.testing.expectEqual(6, it.next().?);
     try std.testing.expectEqual(null, it.next());
     try std.testing.expectEqual(null, it.next());
+}
+
+test "peekable" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB ", ' '))
+        .map(u8, firstChar)
+        .peekable();
+
+    if (it.peek() != 'B') {
+        try std.testing.expectEqual('a', it.next().?);
+    }
+
+    try std.testing.expectEqual('B', it.peek().?);
+    try std.testing.expectEqual('B', it.peek().?);
+    try std.testing.expectEqual('B', it.next().?);
+
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.peek());
+}
+
+test "peekable filter and map" {
+    var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+        .filter(isFirstCharUpper)
+        .map(u8, firstChar)
+        .peekable();
+
+    try std.testing.expectEqual('B', it.peek().?);
+    try std.testing.expectEqual('B', it.peek().?);
+    try std.testing.expectEqual('B', it.next().?);
+
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.peek());
 }

@@ -115,6 +115,7 @@ test "iterator with error" {
 | `last`           | Calls a function fn(Item) on each element of an iterator.                                              |
 | `map`            | Transforms one iterator into another by a given mapping function.                                      |
 | `nth`            | Consumes the iterator, returning the nth element.                                                      |
+| `peekable`       | Creates an iterator which can use the peek methods to look at the next element without consuming it.   |
 | `reduce`         | Reduces the elements to a single one, by repeatedly applying a reducing function.                      |
 | `skip`           | Creates an iterator that skips the first n elements.                                                   |
 | `stepBy`         | Creates an iterator starting at the same point, but stepping by the given amount at each iteration.    |

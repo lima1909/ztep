@@ -136,6 +136,11 @@ pub fn Iterator(Iter: type) type {
             });
         }
 
+        /// Creates an iterator which can use the peek methods to look at the next element of the iterator without consuming it.
+        pub fn peekable(self: *const @This()) iters.Peekable(Iter, Item) {
+            return iters.Peekable(Iter, Item){ .iter = &@constCast(self).iter };
+        }
+
         /// Collects all the items from an iterator into a given collection (like: ArrayList, BoundedArray, HashMap, ...).
         pub fn tryCollectInto(
             self: *const @This(),
