@@ -2,11 +2,11 @@ const std = @import("std");
 
 pub fn Map(Iter: type, Item: type, To: type) type {
     return struct {
-        it: *Iter,
+        iter: *Iter,
         mapFn: *const fn (Item) To,
 
         pub fn next(self: *@This()) ?To {
-            const item = self.it.next() orelse return null;
+            const item = self.iter.next() orelse return null;
             return self.mapFn(item);
         }
     };
@@ -15,7 +15,7 @@ pub fn Map(Iter: type, Item: type, To: type) type {
 test "map" {
     var tokensIt = std.mem.tokenizeScalar(u8, "x BB ccc", ' ');
     var it = Map(@TypeOf(tokensIt), []const u8, u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .mapFn = struct {
             fn firstChar(in: []const u8) u8 {
                 return in[0];
@@ -31,11 +31,11 @@ test "map" {
 
 pub fn Filter(Iter: type, Item: type) type {
     return struct {
-        it: *Iter,
+        iter: *Iter,
         filterFn: *const fn (Item) bool,
 
         pub fn next(self: *@This()) ?Item {
-            while (self.it.next()) |item| {
+            while (self.iter.next()) |item| {
                 if (self.filterFn(item)) {
                     return item;
                 }
@@ -49,7 +49,7 @@ pub fn Filter(Iter: type, Item: type) type {
 test "filter" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = Filter(@TypeOf(tokensIt), []const u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .filterFn = struct {
             fn firstCharUpper(in: []const u8) bool {
                 return std.ascii.isUpper(in[0]);
@@ -64,11 +64,11 @@ test "filter" {
 
 pub fn FilterMap(Iter: type, Item: type, To: type) type {
     return struct {
-        it: *Iter,
+        iter: *Iter,
         filterMapFn: *const fn (Item) ?To,
 
         pub fn next(self: *@This()) ?To {
-            while (self.it.next()) |item| {
+            while (self.iter.next()) |item| {
                 if (self.filterMapFn(item)) |to| {
                     return to;
                 }
@@ -82,7 +82,7 @@ pub fn FilterMap(Iter: type, Item: type, To: type) type {
 test "filterMap" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = FilterMap(@TypeOf(tokensIt), []const u8, u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .filterMapFn = struct {
             fn firstCharUpper(in: []const u8) ?u8 {
                 const first = in[0];
@@ -98,11 +98,11 @@ test "filterMap" {
 
 pub fn Enumerate(Iter: type, Item: type) type {
     return struct {
-        it: *Iter,
+        iter: *Iter,
         index: usize = 0,
 
         pub fn next(self: *@This()) ?struct { usize, Item } {
-            const item = self.it.next() orelse return null;
+            const item = self.iter.next() orelse return null;
             defer self.index += 1;
             return .{ self.index, item };
         }
@@ -111,7 +111,7 @@ pub fn Enumerate(Iter: type, Item: type) type {
 
 test "enumerate" {
     var tokensIt = std.mem.tokenizeScalar(u8, "x BB ccc", ' ');
-    var it = Enumerate(@TypeOf(tokensIt), []const u8){ .it = &tokensIt };
+    var it = Enumerate(@TypeOf(tokensIt), []const u8){ .iter = &tokensIt };
 
     try std.testing.expectEqualDeep(.{ 0, "x" }, it.next().?);
     try std.testing.expectEqualDeep(.{ 1, "BB" }, it.next().?);
@@ -121,11 +121,11 @@ test "enumerate" {
 
 pub fn Inspect(Iter: type, Item: type) type {
     return struct {
-        it: *Iter,
+        iter: *Iter,
         inspectFn: *const fn (Item) Item,
 
         pub fn next(self: *@This()) ?Item {
-            const item = self.it.next() orelse return null;
+            const item = self.iter.next() orelse return null;
             return self.inspectFn(item);
         }
     };
@@ -134,7 +134,7 @@ pub fn Inspect(Iter: type, Item: type) type {
 test "inspect" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = Inspect(@TypeOf(tokensIt), []const u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .inspectFn = struct {
             fn inspect(in: []const u8) []const u8 {
                 return in;
@@ -151,17 +151,17 @@ test "inspect" {
 
 pub fn Skip(Iter: type, Item: type) type {
     return struct {
-        it: *Iter,
+        iter: *Iter,
         n: usize,
 
         pub fn next(self: *@This()) ?Item {
             for (0..self.n) |_| {
-                _ = self.it.next() orelse return null;
+                _ = self.iter.next() orelse return null;
             }
             // disable skip
             self.n = 0;
 
-            return self.it.next();
+            return self.iter.next();
         }
     };
 }
@@ -169,7 +169,7 @@ pub fn Skip(Iter: type, Item: type) type {
 test "skip" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = Skip(@TypeOf(tokensIt), []const u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .n = 2,
     };
 
@@ -181,7 +181,7 @@ test "skip" {
 test "skip on the end" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = Skip(@TypeOf(tokensIt), []const u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .n = 4,
     };
 
@@ -191,7 +191,7 @@ test "skip on the end" {
 test "skip after the end" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = Skip(@TypeOf(tokensIt), []const u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .n = 5,
     };
 
@@ -201,7 +201,7 @@ test "skip after the end" {
 test "skip nothing" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = Skip(@TypeOf(tokensIt), []const u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .n = 0,
     };
 
@@ -214,13 +214,13 @@ test "skip nothing" {
 
 pub fn Take(Iter: type, Item: type) type {
     return struct {
-        it: *Iter,
+        iter: *Iter,
         n: usize = 0,
 
         pub fn next(self: *@This()) ?Item {
             if (self.n != 0) {
                 self.n -= 1;
-                return self.it.next();
+                return self.iter.next();
             }
 
             return null;
@@ -231,7 +231,7 @@ pub fn Take(Iter: type, Item: type) type {
 test "take" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = Take(@TypeOf(tokensIt), []const u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .n = 2,
     };
 
@@ -243,7 +243,7 @@ test "take" {
 test "take after the end" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = Take(@TypeOf(tokensIt), []const u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .n = 5,
     };
 
@@ -257,7 +257,7 @@ test "take after the end" {
 test "take nothing" {
     var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
     var it = Take(@TypeOf(tokensIt), []const u8){
-        .it = &tokensIt,
+        .iter = &tokensIt,
         .n = 0,
     };
 
@@ -317,7 +317,7 @@ test "zip" {
 
 pub fn StepBy(Iter: type, Item: type, step: usize) type {
     return struct {
-        it: *Iter,
+        iter: *Iter,
         step_minus_one: usize = step - 1,
         first_take: bool = true,
 
@@ -327,7 +327,7 @@ pub fn StepBy(Iter: type, Item: type, step: usize) type {
             self.first_take = false;
 
             var i: usize = 0;
-            while (self.it.next()) |item| {
+            while (self.iter.next()) |item| {
                 if (i == step_size) {
                     return item;
                 }
@@ -340,7 +340,7 @@ pub fn StepBy(Iter: type, Item: type, step: usize) type {
 
 test "StepBy" {
     var tokenIt = std.mem.tokenizeScalar(u8, "a b c d e f", ' ');
-    var it1 = StepBy(@TypeOf(tokenIt), []const u8, 1){ .it = &tokenIt };
+    var it1 = StepBy(@TypeOf(tokenIt), []const u8, 1){ .iter = &tokenIt };
 
     try std.testing.expectEqualStrings("a", it1.next().?);
     try std.testing.expectEqualStrings("b", it1.next().?);
@@ -351,7 +351,7 @@ test "StepBy" {
     try std.testing.expectEqual(null, it1.next());
 
     tokenIt = std.mem.tokenizeScalar(u8, "a b c d e f", ' ');
-    var it2 = StepBy(@TypeOf(tokenIt), []const u8, 2){ .it = &tokenIt };
+    var it2 = StepBy(@TypeOf(tokenIt), []const u8, 2){ .iter = &tokenIt };
 
     try std.testing.expectEqualStrings("a", it2.next().?);
     try std.testing.expectEqualStrings("c", it2.next().?);
@@ -359,7 +359,7 @@ test "StepBy" {
     try std.testing.expectEqual(null, it2.next());
 
     tokenIt = std.mem.tokenizeScalar(u8, "a b c d e f", ' ');
-    var it3 = StepBy(@TypeOf(tokenIt), []const u8, 3){ .it = &tokenIt };
+    var it3 = StepBy(@TypeOf(tokenIt), []const u8, 3){ .iter = &tokenIt };
 
     try std.testing.expectEqualStrings("a", it3.next().?);
     try std.testing.expectEqualStrings("d", it3.next().?);

@@ -9,7 +9,7 @@ pub fn extend(iter: anytype) Iterator(@TypeOf(iter)) {
 
 /// Is the Iterator Wrapper with extended methods, like filter, map, enumerate ...
 pub fn Iterator(Iter: type) type {
-    if (!@hasDecl(Iter, "next"))
+    if (!std.meta.hasFn(Iter, "next"))
         @compileError("missing iterator method 'next'");
 
     const nextFn = switch (@typeInfo(@TypeOf(Iter.next))) {
@@ -23,7 +23,6 @@ pub fn Iterator(Iter: type) type {
     };
 
     return struct {
-        /// Returns the original (wrapped) Iterator for using this methods.
         iter: Iter,
 
         pub fn next(self: *@This()) ?Item {
@@ -32,33 +31,33 @@ pub fn Iterator(Iter: type) type {
 
         /// Transforms one iterator into another by a given mapping function.
         pub fn map(self: *const @This(), To: type, mapFn: *const fn (Item) To) Iterator(iters.Map(Iter, Item, To)) {
-            return extend(iters.Map(Iter, Item, To){
-                .it = &@constCast(self).iter,
+            return .{ .iter = .{
+                .iter = &@constCast(self).iter,
                 .mapFn = mapFn,
-            });
+            } };
         }
 
         /// Creates an iterator which uses a function to determine if an element should be yielded.
         pub fn filter(self: *const @This(), filterFn: *const fn (Item) bool) Iterator(iters.Filter(Iter, Item)) {
-            return extend(iters.Filter(Iter, Item){
-                .it = &@constCast(self).iter,
+            return .{ .iter = .{
+                .iter = &@constCast(self).iter,
                 .filterFn = filterFn,
-            });
+            } };
         }
 
         /// Creates an iterator that both filters and maps in one call.
         pub fn filterMap(self: *const @This(), To: type, filterMapFn: *const fn (Item) ?To) Iterator(iters.FilterMap(Iter, Item, To)) {
-            return extend(iters.FilterMap(Iter, Item, To){
-                .it = &@constCast(self).iter,
+            return .{ .iter = .{
+                .iter = &@constCast(self).iter,
                 .filterMapFn = filterMapFn,
-            });
+            } };
         }
 
         /// Creates an iterator which gives the current iteration count as well as the next value.
         pub fn enumerate(self: *const @This()) Iterator(iters.Enumerate(Iter, Item)) {
-            return extend(iters.Enumerate(Iter, Item){
-                .it = &@constCast(self).iter,
-            });
+            return .{ .iter = .{
+                .iter = &@constCast(self).iter,
+            } };
         }
 
         /// This iterator do nothing, the purpose is for debugging.
@@ -69,18 +68,18 @@ pub fn Iterator(Iter: type) type {
         ///     }
         /// }.print)
         pub fn inspect(self: *const @This(), inspectFn: *const fn (Item) Item) Iterator(iters.Inspect(Iter, Item)) {
-            return extend(iters.Inspect(Iter, Item){
-                .it = &@constCast(self).iter,
+            return .{ .iter = .{
+                .iter = &@constCast(self).iter,
                 .inspectFn = inspectFn(Item),
-            });
+            } };
         }
 
         /// Folds every element into an accumulator by applying an operation, returning the final result.
         pub fn fold(self: *const @This(), To: type, init: To, foldFn: *const fn (To, Item) To) To {
-            var it = &@constCast(self).iter;
+            var iter = &@constCast(self).iter;
 
             var accum = init;
-            while (it.next()) |item| {
+            while (iter.next()) |item| {
                 accum = foldFn(accum, item);
             }
             return accum;
@@ -88,10 +87,10 @@ pub fn Iterator(Iter: type) type {
 
         /// Reduces the elements to a single one, by repeatedly applying a reducing function.
         pub fn reduce(self: *const @This(), reduceFn: *const fn (Item, Item) Item) ?Item {
-            var it = &@constCast(self).iter;
+            var iter = &@constCast(self).iter;
 
-            var accum = it.next() orelse return null;
-            while (it.next()) |item| {
+            var accum = iter.next() orelse return null;
+            while (iter.next()) |item| {
                 accum = reduceFn(accum, item);
             }
             return accum;
@@ -99,46 +98,46 @@ pub fn Iterator(Iter: type) type {
 
         /// Creates an iterator that skips the first n elements.
         pub fn skip(self: *const @This(), n: usize) Iterator(iters.Skip(Iter, Item)) {
-            return extend(iters.Skip(Iter, Item){
-                .it = &@constCast(self).iter,
+            return .{ .iter = .{
+                .iter = &@constCast(self).iter,
                 .n = n,
-            });
+            } };
         }
 
         /// Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
         pub fn take(self: *const @This(), n: usize) Iterator(iters.Take(Iter, Item)) {
-            return extend(iters.Take(Iter, Item){
-                .it = &@constCast(self).iter,
+            return .{ .iter = .{
+                .iter = &@constCast(self).iter,
                 .n = n,
-            });
+            } };
         }
 
         /// Creates an iterator starting at the same point, but stepping by the given amount at each iteration.
         pub fn stepBy(self: *const @This(), comptime step: usize) Iterator(iters.StepBy(Iter, Item, step)) {
-            return extend(iters.StepBy(Iter, Item, step){
-                .it = &@constCast(self).iter,
-            });
+            return .{ .iter = .{
+                .iter = &@constCast(self).iter,
+            } };
         }
 
         /// Takes two iterators and creates a new iterator over both in sequence.
         pub fn chain(self: *const @This(), otherIter: anytype) Iterator(iters.Chain(Iter, @TypeOf(otherIter), Item)) {
-            return extend(iters.Chain(Iter, @TypeOf(otherIter), Item){
+            return .{ .iter = .{
                 .first = &@constCast(self).iter,
                 .second = otherIter,
-            });
+            } };
         }
 
         /// Zips up’ two iterators into a single iterator of pairs.
         pub fn zip(self: *const @This(), otherIter: anytype) Iterator(iters.Zip(Iter, @TypeOf(otherIter), Item)) {
-            return extend(iters.Zip(Iter, @TypeOf(otherIter), Item){
+            return .{ .iter = .{
                 .first = &@constCast(self).iter,
                 .second = otherIter,
-            });
+            } };
         }
 
         /// Creates an iterator which can use the peek methods to look at the next element of the iterator without consuming it.
         pub fn peekable(self: *const @This()) iters.Peekable(Iter, Item) {
-            return iters.Peekable(Iter, Item){ .iter = &@constCast(self).iter };
+            return .{ .iter = &@constCast(self).iter };
         }
 
         /// Collects all the items from an iterator into a given collection (like: ArrayList, BoundedArray, HashMap, ...).
@@ -147,10 +146,10 @@ pub fn Iterator(Iter: type) type {
             containerPtr: anytype,
             iterFn: *const fn (@TypeOf(containerPtr), Item) anyerror!void,
         ) anyerror!usize {
-            var it = &@constCast(self).iter;
+            var iter = &@constCast(self).iter;
 
             var index: usize = 0;
-            while (it.next()) |item| {
+            while (iter.next()) |item| {
                 try iterFn(containerPtr, item);
                 index += 1;
             }
@@ -159,12 +158,12 @@ pub fn Iterator(Iter: type) type {
 
         /// Collects all the items from an iterator into a given Buffer.
         pub fn tryCollect(self: *const @This(), buffer: []Item) anyerror!usize {
-            var it = &@constCast(self).iter;
+            var iter = &@constCast(self).iter;
 
             var index: usize = 0;
             const len = buffer.len;
 
-            while (it.next()) |item| {
+            while (iter.next()) |item| {
                 if (index == len) return error.IndexOutOfBound;
 
                 buffer[index] = item;
@@ -176,18 +175,18 @@ pub fn Iterator(Iter: type) type {
 
         /// Calls a function fn(Item) on each element of an iterator.
         pub fn forEach(self: *const @This(), forEachFn: *const fn (Item) void) void {
-            var it = &@constCast(self).iter;
+            var iter = &@constCast(self).iter;
 
-            while (it.next()) |item| {
+            while (iter.next()) |item| {
                 forEachFn(item);
             }
         }
 
         /// Searches for an element of an iterator that satisfies a predicate.
         pub fn find(self: *const @This(), predicateFn: *const fn (Item) bool) ?Item {
-            var it = &@constCast(self).iter;
+            var iter = &@constCast(self).iter;
 
-            while (it.next()) |item| {
+            while (iter.next()) |item| {
                 if (predicateFn(item)) {
                     return item;
                 }
@@ -197,10 +196,10 @@ pub fn Iterator(Iter: type) type {
 
         /// Consumes the iterator, returning the last element.
         pub fn last(self: *const @This()) ?Item {
-            var it = &@constCast(self).iter;
+            var iter = &@constCast(self).iter;
 
             var item: ?Item = null;
-            while (it.next()) |i| {
+            while (iter.next()) |i| {
                 item = i;
             }
             return item;
@@ -208,10 +207,10 @@ pub fn Iterator(Iter: type) type {
 
         /// Consumes the iterator, returning the nth element.
         pub fn nth(self: *const @This(), n: usize) ?Item {
-            var it = &@constCast(self).iter;
+            var iter = &@constCast(self).iter;
 
             var i: usize = 0;
-            while (it.next()) |item| {
+            while (iter.next()) |item| {
                 if (i == n) {
                     return item;
                 }
@@ -222,10 +221,10 @@ pub fn Iterator(Iter: type) type {
 
         /// Consumes the iterator, counting the number of iterations and returning it.
         pub fn count(self: *const @This()) usize {
-            var it = &@constCast(self).iter;
+            var iter = &@constCast(self).iter;
 
             var counter: usize = 0;
-            while (it.next() != null) {
+            while (iter.next() != null) {
                 counter += 1;
             }
             return counter;
@@ -235,7 +234,7 @@ pub fn Iterator(Iter: type) type {
 
 /// Create a new Iterator for the given slice.
 pub fn fromSlice(comptime slice: anytype) Iterator(Slice(slice)) {
-    return Iterator(Slice(slice)){ .iter = Slice(slice){ .items = slice } };
+    return .{ .iter = Slice(slice){ .items = slice } };
 }
 
 pub fn Slice(slice: anytype) type {
@@ -330,7 +329,7 @@ test "slice i32 next and nextBack" {
 
 /// Create a new Iterator for the given range, from start to exclude end.
 pub fn range(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
-    return Iterator(Range(Item)){ .iter = Range(Item){
+    return .{ .iter = Range(Item){
         .start = start,
         .end = end,
     } };
@@ -338,7 +337,7 @@ pub fn range(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
 
 /// Create a new Iterator for the given range, like range, but the end is inclusive.
 pub fn rangeIncl(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
-    return Iterator(Range(Item)){ .iter = Range(Item){
+    return .{ .iter = Range(Item){
         .start = start,
         .end = end,
         .inclusive = true,
@@ -449,7 +448,7 @@ test "range i32 start > end" {
 
 /// Creates an custom iterator with the initialized (start) value and the provided (next) function.
 pub fn fromFn(Item: type, init: Item, nextFn: *const fn (*Item) ?Item) Iterator(FromFn(Item)) {
-    return Iterator(FromFn(Item)){ .iter = FromFn(Item){
+    return .{ .iter = FromFn(Item){
         .value = init,
         .callback = nextFn,
     } };
@@ -489,17 +488,17 @@ test "fromFn, simple counter until 5" {
 
 /// Creates an iterator that yields nothing.
 pub fn empty(Item: type, value: anytype) Iterator(RepeatN(Item)) {
-    return Iterator(RepeatN(Item)){ .iter = RepeatN(Item){ .item = value, .ntimes = 0 } };
+    return .{ .iter = RepeatN(Item){ .item = value, .ntimes = 0 } };
 }
 
 /// Creates an iterator that yields an element exactly once.
 pub fn once(Item: type, value: anytype) Iterator(RepeatN(Item)) {
-    return Iterator(RepeatN(Item)){ .iter = RepeatN(Item){ .item = value, .ntimes = 1 } };
+    return .{ .iter = RepeatN(Item){ .item = value, .ntimes = 1 } };
 }
 
 /// Creates a new iterator that N times repeats a given value.
 pub fn repeatN(Item: type, value: anytype, n: usize) Iterator(RepeatN(Item)) {
-    return Iterator(RepeatN(Item)){ .iter = RepeatN(Item){ .item = value, .ntimes = n } };
+    return .{ .iter = RepeatN(Item){ .item = value, .ntimes = n } };
 }
 
 pub fn RepeatN(Item: type) type {
@@ -576,8 +575,8 @@ test "repeatN filter" {
 ///   - true means continue (ignore error and call next)
 ///   - false, interrupt next and returns null
 pub fn extendWithError(iterPtr: anytype, handleError: ?*const fn (anyerror) bool) Iterator(IterWithError(@TypeOf(iterPtr))) {
-    return Iterator(IterWithError(@TypeOf(iterPtr))){ .iter = IterWithError(@TypeOf(iterPtr)){
-        .it = iterPtr,
+    return .{ .iter = IterWithError(@TypeOf(iterPtr)){
+        .iter = iterPtr,
         .handleError = handleError orelse IterWithError(@TypeOf(iterPtr)).stopOnError,
     } };
 }
@@ -605,7 +604,7 @@ pub fn IterWithError(Iter: type) type {
     };
 
     return struct {
-        it: Iter,
+        iter: Iter,
         handleError: *const fn (anyerror) bool,
         stop: bool = false,
 
@@ -613,7 +612,7 @@ pub fn IterWithError(Iter: type) type {
             if (self.stop) return null;
 
             while (true) {
-                const item = self.it.next() catch |err| {
+                const item = self.iter.next() catch |err| {
                     // execute the error handler
                     // if return false, then break, else continue
                     if (!self.handleError(err)) {
@@ -652,7 +651,13 @@ test "iterator with error" {
 /// You can for example, use this Wrapper, if you want to iterate from the end, when the Iterator has a method nextBack.
 /// where 'iter' is the Iterator and 'asNextFn' is the iterate method like 'next' with en optional Item as return value.
 pub fn toIterator(comptime iter: anytype, asNextFn: anytype) Iterator(ToIterator(iter, asNextFn)) {
-    return extend(ToIterator(iter, asNextFn){});
+    return .{ .iter = ToIterator(iter, asNextFn){} };
+}
+
+/// Reverses an iterator’s direction.
+/// The given Iterator needs a method: nextBack
+pub fn reverse(comptime iter: anytype) Iterator(ToIterator(iter, @TypeOf(iter).nextBack)) {
+    return .{ .iter = ToIterator(iter, @TypeOf(iter).nextBack){} };
 }
 
 pub fn ToIterator(iter: anytype, asNextFn: anytype) type {
@@ -669,18 +674,18 @@ pub fn ToIterator(iter: anytype, asNextFn: anytype) type {
     };
 
     return struct {
-        it: Iter = iter,
+        iter: Iter = iter,
         nextFn: *const fn (*Iter) ?Item = asNextFn,
 
         pub fn next(self: *@This()) ?Item {
-            return self.nextFn(&self.it);
+            return self.nextFn(&self.iter);
         }
     };
 }
 
 test "iter no next, iterate with backNext" {
     const items = [_][]const u8{ "a", "bb", "ccc" };
-    var it = toIterator(Slice(items){ .items = &items }, Slice(items).nextBack)
+    var it = reverse(Slice(items){ .items = &items })
         .filter(
         struct {
             fn removeBB(item: []const u8) bool {
