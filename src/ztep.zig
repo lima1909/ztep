@@ -199,9 +199,7 @@ pub fn Iterator(Iter: type) type {
             var iter = &@constCast(self).iter;
 
             var item: ?Item = null;
-            while (iter.next()) |i| {
-                item = i;
-            }
+            while (iter.next()) |i| : (item = i) {}
             return item;
         }
 
@@ -210,11 +208,10 @@ pub fn Iterator(Iter: type) type {
             var iter = &@constCast(self).iter;
 
             var i: usize = 0;
-            while (iter.next()) |item| {
+            while (iter.next()) |item| : (i += 1) {
                 if (i == n) {
                     return item;
                 }
-                i += 1;
             }
             return null;
         }
@@ -224,9 +221,7 @@ pub fn Iterator(Iter: type) type {
             var iter = &@constCast(self).iter;
 
             var counter: usize = 0;
-            while (iter.next() != null) {
-                counter += 1;
-            }
+            while (iter.next() != null) : (counter += 1) {}
             return counter;
         }
     };

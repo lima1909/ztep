@@ -369,28 +369,27 @@ test "StepBy" {
 pub fn Peekable(Iter: type, Item: type) type {
     return struct {
         iter: *Iter,
-        peeked: ?Item = null,
+        peeked: ??Item = null,
 
         pub fn next(self: *@This()) ?Item {
-            if (self.peeked) |item| {
+            if (self.peeked == null)
+                return self.iter.next();
+
+            if (self.peeked.?) |peeked| {
                 self.peeked = null;
-                return item;
-            }
-
-            return self.iter.next();
-        }
-
-        pub fn peek(self: *@This()) ?Item {
-            if (self.peeked) |item| {
-                return item;
-            }
-
-            if (self.iter.next()) |item| {
-                self.peeked = item;
-                return item;
+                return peeked;
             }
 
             return null;
+        }
+
+        pub fn peek(self: *@This()) ?Item {
+            if (self.peeked == null) {
+                self.peeked = self.iter.next();
+                return self.peeked orelse null;
+            }
+
+            return self.peeked.?;
         }
     };
 }

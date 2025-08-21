@@ -500,3 +500,12 @@ test "peekable filter and map" {
     try std.testing.expectEqual(null, it.next());
     try std.testing.expectEqual(null, it.peek());
 }
+
+test "peekable ones" {
+    var it = fromSlice(&[_]u32{1}).peekable();
+
+    try std.testing.expectEqual(1, it.next().?);
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.peek());
+}
