@@ -3,6 +3,7 @@ const extend = @import("ztep.zig").extend;
 const extendWithError = @import("ztep.zig").extendWithError;
 const fromSlice = @import("ztep.zig").fromSlice;
 const range = @import("ztep.zig").range;
+const Iterator = @import("ztep.zig").Iterator;
 
 fn firstChar(in: []const u8) u8 {
     return in[0];
@@ -501,11 +502,41 @@ test "peekable filter and map" {
     try std.testing.expectEqual(null, it.peek());
 }
 
-test "peekable ones" {
-    var it = fromSlice(&[_]u32{1}).peekable();
+const PeekableIter = struct {
+    counter: u8 = 0,
+    index: u8 = 0,
 
-    try std.testing.expectEqual(1, it.next().?);
-    try std.testing.expectEqual(null, it.peek());
-    try std.testing.expectEqual(null, it.peek());
-    try std.testing.expectEqual(null, it.peek());
+    pub fn next(self: *@This()) ?u8 {
+        self.counter += 1;
+
+        if (self.index == 1) return null;
+
+        self.index += 1;
+        return self.index;
+    }
+};
+
+test "peekable count one next calls = 2" {
+    var it = Iterator(PeekableIter){ .iter = PeekableIter{} };
+    var p = it.peekable();
+
+    try std.testing.expectEqual(1, p.next().?);
+
+    try std.testing.expectEqual(null, p.peek());
+    try std.testing.expectEqual(null, p.peek());
+
+    try std.testing.expectEqual(2, it.iter.counter);
+}
+
+test "peekable count two next calls = 3" {
+    var it = Iterator(PeekableIter){ .iter = PeekableIter{} };
+    var p = it.peekable();
+
+    try std.testing.expectEqual(1, p.next().?);
+    try std.testing.expectEqual(null, p.next());
+
+    try std.testing.expectEqual(null, p.peek());
+    try std.testing.expectEqual(null, p.peek());
+
+    try std.testing.expectEqual(3, it.iter.counter);
 }
