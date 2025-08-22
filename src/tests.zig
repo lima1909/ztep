@@ -40,8 +40,13 @@ test "extend" {
         }.splitLine,
     );
 
+    try std.testing.expectEqualDeep([3][]const u8{ "a", "b", "c" }, it.peek().?);
     try std.testing.expectEqualDeep([3][]const u8{ "a", "b", "c" }, it.next().?);
+
+    try std.testing.expectEqualDeep([3][]const u8{ "d", "e", "f" }, it.peek().?);
     try std.testing.expectEqualDeep([3][]const u8{ "d", "e", "f" }, it.next().?);
+
+    try std.testing.expectEqual(null, it.peek());
     try std.testing.expectEqual(null, it.next());
 }
 
@@ -49,10 +54,15 @@ test "extend map" {
     var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .map(u8, firstChar);
 
+    try std.testing.expectEqual('x', it.peek().?);
+    try std.testing.expectEqual('x', it.peek().?);
     try std.testing.expectEqual('x', it.next().?);
+
     try std.testing.expectEqual('B', it.next().?);
     try std.testing.expectEqual('c', it.next().?);
+
     try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.peek());
 }
 
 test "extend filter" {
@@ -502,41 +512,36 @@ test "peekable filter and map" {
     try std.testing.expectEqual(null, it.peek());
 }
 
-const PeekableIter = struct {
+const TestIter = struct {
     counter: u8 = 0,
-    index: u8 = 0,
 
     pub fn next(self: *@This()) ?u8 {
         self.counter += 1;
 
-        if (self.index == 1) return null;
-
-        self.index += 1;
-        return self.index;
+        if (self.counter > 1) return null;
+        return self.counter;
     }
 };
 
 test "peekable count one next calls = 2" {
-    var it = Iterator(PeekableIter){ .iter = PeekableIter{} };
-    var p = it.peekable();
+    var it = extend(TestIter{}).peekable();
 
-    try std.testing.expectEqual(1, p.next().?);
+    try std.testing.expectEqual(1, it.next().?);
 
-    try std.testing.expectEqual(null, p.peek());
-    try std.testing.expectEqual(null, p.peek());
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.peek());
 
     try std.testing.expectEqual(2, it.iter.counter);
 }
 
 test "peekable count two next calls = 3" {
-    var it = Iterator(PeekableIter){ .iter = PeekableIter{} };
-    var p = it.peekable();
+    var it = extend(TestIter{}).peekable();
 
-    try std.testing.expectEqual(1, p.next().?);
-    try std.testing.expectEqual(null, p.next());
+    try std.testing.expectEqual(1, it.next().?);
+    try std.testing.expectEqual(null, it.next());
 
-    try std.testing.expectEqual(null, p.peek());
-    try std.testing.expectEqual(null, p.peek());
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.peek());
 
     try std.testing.expectEqual(3, it.iter.counter);
 }

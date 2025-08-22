@@ -29,6 +29,12 @@ pub fn Iterator(Iter: type) type {
             return self.iter.next();
         }
 
+        /// Returns a reference to the next() value WITHOUT advancing the Iterator.
+        /// It works ONLY, if the base (wrapped) Iterator peek supported.
+        pub fn peek(self: *@This()) ?Item {
+            return self.iter.peek();
+        }
+
         /// Transforms one iterator into another by a given mapping function.
         pub fn map(self: *const @This(), To: type, mapFn: *const fn (Item) To) Iterator(iters.Map(Iter, Item, To)) {
             return .{ .iter = .{
@@ -263,6 +269,12 @@ pub fn Slice(slice: anytype) type {
             self.end -= 1;
             return self.items[self.end];
         }
+
+        /// returns a reference to the next() value without advancing the iterator
+        pub fn peek(self: @This()) ?Item {
+            if (self.front >= self.end) return null;
+            return self.items[self.front];
+        }
     };
 }
 
@@ -322,6 +334,40 @@ test "slice i32 next and nextBack" {
     try std.testing.expectEqualDeep(null, it.nextBack());
 }
 
+test "slice peek first" {
+    var it = fromSlice(&[_][]const u8{ "a", "b" }).iter;
+
+    try std.testing.expectEqualStrings("a", it.peek().?);
+    try std.testing.expectEqualStrings("a", it.peek().?);
+    try std.testing.expectEqualStrings("a", it.next().?);
+
+    try std.testing.expectEqualStrings("b", it.peek().?);
+    try std.testing.expectEqualStrings("b", it.next().?);
+
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "slice peek after next" {
+    var it = fromSlice(&[_][]const u8{ "a", "b" }).iter;
+
+    try std.testing.expectEqualStrings("a", it.next().?);
+
+    try std.testing.expectEqualStrings("b", it.peek().?);
+    try std.testing.expectEqualStrings("b", it.next().?);
+
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "slice peek empty" {
+    var it = fromSlice(&[_][]const u8{}).iter;
+
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.peek());
+}
+
 /// Create a new Iterator for the given range, from start to exclude end.
 pub fn range(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
     return .{ .iter = Range(Item){
@@ -360,6 +406,12 @@ pub fn Range(Item: type) type {
 
             self.end -= 1;
             return self.end;
+        }
+
+        /// returns a reference to the next() value without advancing the iterator
+        pub fn peek(self: @This()) ?Item {
+            if (self.start > self.end or (!self.inclusive and self.start == self.end)) return null;
+            return self.start;
         }
     };
 }
@@ -441,6 +493,19 @@ test "range i32 start > end" {
     try std.testing.expectEqualDeep(null, it.nextBack());
 }
 
+test "range i32 peek" {
+    var it = range(i32, 1, 3).iter;
+
+    try std.testing.expectEqualDeep(1, it.peek());
+    try std.testing.expectEqualDeep(1, it.next());
+
+    try std.testing.expectEqualDeep(2, it.peek());
+    try std.testing.expectEqualDeep(2, it.next());
+
+    try std.testing.expectEqual(null, it.peek());
+    try std.testing.expectEqual(null, it.next());
+}
+
 /// Creates an custom iterator with the initialized (start) value and the provided (next) function.
 pub fn fromFn(Item: type, init: Item, nextFn: *const fn (*Item) ?Item) Iterator(FromFn(Item)) {
     return .{ .iter = FromFn(Item){
@@ -482,8 +547,8 @@ test "fromFn, simple counter until 5" {
 }
 
 /// Creates an iterator that yields nothing.
-pub fn empty(Item: type, value: anytype) Iterator(RepeatN(Item)) {
-    return .{ .iter = RepeatN(Item){ .item = value, .ntimes = 0 } };
+pub fn empty(Item: type) Iterator(RepeatN(Item)) {
+    return .{ .iter = RepeatN(Item){ .item = undefined, .ntimes = 0 } };
 }
 
 /// Creates an iterator that yields an element exactly once.
@@ -507,17 +572,22 @@ pub fn RepeatN(Item: type) type {
             self.ntimes -= 1;
             return self.item;
         }
+
+        pub fn peek(self: *@This()) ?Item {
+            if (self.ntimes == 0) return null;
+            return self.item;
+        }
     };
 }
 
 test "empty with filter" {
-    var it = empty(u8, 'x');
+    var it = empty(u8);
     try std.testing.expectEqual(null, it.next());
 
-    var it2 = empty(u8, 'a').filter(std.ascii.isAlphabetic);
+    var it2 = empty(u8).filter(std.ascii.isAlphabetic);
     try std.testing.expectEqual(null, it2.next());
 
-    it2 = empty(u8, '1').filter(std.ascii.isAlphabetic);
+    it2 = empty(u8).filter(std.ascii.isAlphabetic);
     try std.testing.expectEqual(null, it2.next());
 }
 
@@ -561,6 +631,21 @@ test "repeatN filter" {
 
     it = repeatN(u8, '1', 2).filter(std.ascii.isAlphabetic);
     try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "repeat empty" {
+    var it = empty(u8).iter;
+    try std.testing.expectEqual(null, it.peek());
+}
+
+test "repeat once" {
+    var it = once(u8, 'x').iter;
+
+    try std.testing.expectEqual('x', it.peek().?);
+    try std.testing.expectEqual('x', it.next().?);
+
+    try std.testing.expectEqual(null, it.peek());
     try std.testing.expectEqual(null, it.next());
 }
 

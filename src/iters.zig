@@ -6,8 +6,11 @@ pub fn Map(Iter: type, Item: type, To: type) type {
         mapFn: *const fn (Item) To,
 
         pub fn next(self: *@This()) ?To {
-            const item = self.iter.next() orelse return null;
-            return self.mapFn(item);
+            return self.mapFn(self.iter.next() orelse return null);
+        }
+
+        pub fn peek(self: *@This()) ?To {
+            return self.mapFn(self.iter.peek() orelse return null);
         }
     };
 }
@@ -23,9 +26,16 @@ test "map" {
         }.firstChar,
     };
 
+    try std.testing.expectEqual('x', it.peek().?);
     try std.testing.expectEqual('x', it.next().?);
+
+    try std.testing.expectEqual('B', it.peek().?);
     try std.testing.expectEqual('B', it.next().?);
+
+    try std.testing.expectEqual('c', it.peek().?);
     try std.testing.expectEqual('c', it.next().?);
+
+    try std.testing.expectEqual(null, it.peek());
     try std.testing.expectEqual(null, it.next());
 }
 
@@ -125,8 +135,10 @@ pub fn Inspect(Iter: type, Item: type) type {
         inspectFn: *const fn (Item) Item,
 
         pub fn next(self: *@This()) ?Item {
-            const item = self.iter.next() orelse return null;
-            return self.inspectFn(item);
+            return self.inspectFn(self.iter.next() orelse return null);
+        }
+        pub fn peek(self: *@This()) ?Item {
+            return self.inspectFn(self.iter.peek() orelse return null);
         }
     };
 }
@@ -142,10 +154,14 @@ test "inspect" {
         }.inspect,
     };
 
+    try std.testing.expectEqualStrings("a", it.peek().?);
     try std.testing.expectEqualStrings("a", it.next().?);
+
     try std.testing.expectEqualStrings("BB", it.next().?);
     try std.testing.expectEqualStrings("ccc", it.next().?);
     try std.testing.expectEqualStrings("DDD", it.next().?);
+
+    try std.testing.expectEqual(null, it.peek());
     try std.testing.expectEqual(null, it.next());
 }
 
