@@ -26,19 +26,20 @@ test "extend" {
     const csv = "a,b,c\nd,e,f";
     var it = extend(std.mem.tokenizeScalar(u8, csv, '\n'))
         .map(
-        [3][]const u8,
-        struct {
-            fn splitLine(line: []const u8) [3][]const u8 {
-                var col: [3][]const u8 = undefined;
-                var it = std.mem.tokenizeScalar(u8, line, ',');
-                for (0..3) |i| {
-                    col[i] = it.next().?;
-                }
+            [3][]const u8,
+            struct {
+                fn splitLine(line: []const u8) [3][]const u8 {
+                    var col: [3][]const u8 = undefined;
+                    var it = std.mem.tokenizeScalar(u8, line, ',');
+                    for (0..3) |i| {
+                        col[i] = it.next().?;
+                    }
 
-                return col;
-            }
-        }.splitLine,
-    );
+                    return col;
+                }
+            }.splitLine,
+        )
+        .peekable();
 
     try std.testing.expectEqualDeep([3][]const u8{ "a", "b", "c" }, it.peek().?);
     try std.testing.expectEqualDeep([3][]const u8{ "a", "b", "c" }, it.next().?);
@@ -52,7 +53,8 @@ test "extend" {
 
 test "extend map" {
     var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
-        .map(u8, firstChar);
+        .map(u8, firstChar)
+        .peekable();
 
     try std.testing.expectEqual('x', it.peek().?);
     try std.testing.expectEqual('x', it.peek().?);
@@ -344,7 +346,9 @@ test "nth" {
         .map(u8, firstChar)
         .filter(std.ascii.isLower);
 
-    try std.testing.expectEqual(null, it2.nth(5));
+    try std.testing.expectEqual('c', it2.nth(1));
+    try std.testing.expectEqual('e', it2.nth(1));
+    try std.testing.expectEqual(null, it2.nth(1));
 }
 
 test "nth empty" {

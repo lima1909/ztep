@@ -29,12 +29,6 @@ pub fn Iterator(Iter: type) type {
             return self.iter.next();
         }
 
-        /// Returns a reference to the next() value WITHOUT advancing the Iterator.
-        /// It works ONLY, if the base (wrapped) Iterator peek supported.
-        pub fn peek(self: *@This()) ?Item {
-            return self.iter.peek();
-        }
-
         /// Transforms one iterator into another by a given mapping function.
         pub fn map(self: *const @This(), To: type, mapFn: *const fn (Item) To) Iterator(iters.Map(Iter, Item, To)) {
             return .{ .iter = .{
@@ -269,12 +263,6 @@ pub fn Slice(slice: anytype) type {
             self.end -= 1;
             return self.items[self.end];
         }
-
-        /// returns a reference to the next() value without advancing the iterator
-        pub fn peek(self: @This()) ?Item {
-            if (self.front >= self.end) return null;
-            return self.items[self.front];
-        }
     };
 }
 
@@ -335,7 +323,7 @@ test "slice i32 next and nextBack" {
 }
 
 test "slice peek first" {
-    var it = fromSlice(&[_][]const u8{ "a", "b" }).iter;
+    var it = fromSlice(&[_][]const u8{ "a", "b" }).peekable();
 
     try std.testing.expectEqualStrings("a", it.peek().?);
     try std.testing.expectEqualStrings("a", it.peek().?);
@@ -349,7 +337,7 @@ test "slice peek first" {
 }
 
 test "slice peek after next" {
-    var it = fromSlice(&[_][]const u8{ "a", "b" }).iter;
+    var it = fromSlice(&[_][]const u8{ "a", "b" }).peekable();
 
     try std.testing.expectEqualStrings("a", it.next().?);
 
@@ -361,7 +349,7 @@ test "slice peek after next" {
 }
 
 test "slice peek empty" {
-    var it = fromSlice(&[_][]const u8{}).iter;
+    var it = fromSlice(&[_][]const u8{}).peekable();
 
     try std.testing.expectEqual(null, it.peek());
     try std.testing.expectEqual(null, it.next());
@@ -406,12 +394,6 @@ pub fn Range(Item: type) type {
 
             self.end -= 1;
             return self.end;
-        }
-
-        /// returns a reference to the next() value without advancing the iterator
-        pub fn peek(self: @This()) ?Item {
-            if (self.start > self.end or (!self.inclusive and self.start == self.end)) return null;
-            return self.start;
         }
     };
 }
@@ -494,7 +476,7 @@ test "range i32 start > end" {
 }
 
 test "range i32 peek" {
-    var it = range(i32, 1, 3).iter;
+    var it = range(i32, 1, 3).peekable();
 
     try std.testing.expectEqualDeep(1, it.peek());
     try std.testing.expectEqualDeep(1, it.next());
