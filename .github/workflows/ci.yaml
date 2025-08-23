@@ -8,6 +8,7 @@ jobs:
     strategy:
       matrix:
         platform: [ubuntu-latest, macos-latest, windows-latest]
+        zig_version: ["0.14.1", "0.15.1"]
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -18,7 +19,7 @@ jobs:
       - name: zig
         uses: goto-bus-stop/setup-zig@v2
         with:
-          version: 0.14.1
+          version: ${{ matrix.zig_version }} 
       - name: check zig version
         run: zig version
       - name: run all unit tests
