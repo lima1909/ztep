@@ -5,6 +5,11 @@ const fromSlice = @import("ztep.zig").fromSlice;
 const range = @import("ztep.zig").range;
 const Iterator = @import("ztep.zig").Iterator;
 
+const is_zig_0_14 = if (std.meta.hasMethod(std.ArrayList(u8), "appendBounded"))
+    false
+else
+    true;
+
 fn firstChar(in: []const u8) u8 {
     return in[0];
 }
@@ -124,6 +129,18 @@ test "filterMap" {
     try std.testing.expectEqual(null, it.next());
 }
 
+test "map-fold" {
+    const len = extend(std.mem.tokenizeScalar(u8, "xx BB ccc", ' '))
+        .map([]const u8, struct {
+            fn doNothing(in: []const u8) []const u8 {
+                return in;
+            }
+        }.doNothing)
+        .fold(usize, 0, addLen);
+
+    try std.testing.expectEqual(7, len);
+}
+
 test "filter-fold" {
     const len = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .filter(isFirstCharUpper)
@@ -212,6 +229,23 @@ test "from slice with skip twice" {
     try std.testing.expectEqual(null, it.next());
 }
 
+test "from slice with skip and count after filter" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .skip(1);
+
+    //  it.next() => 'c'
+    try std.testing.expectEqual(1, it.count());
+}
+
+test "from slice with skip count" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .skip(3);
+
+    try std.testing.expectEqual(0, it.count());
+}
+
 test "from slice with take" {
     var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
         .take(2)
@@ -247,32 +281,36 @@ test "from slice try collect IndexOutOfBound " {
     unreachable;
 }
 
-// TODO: fix this tests for zig version: 0.15
-//
-// test "from slice collect BoundedArray" {
-//     var buffer: std.BoundedArray(u8, 7) = try .init(0);
-//
-//     const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
-//         .map(u8, firstChar)
-//         .filter(std.ascii.isLower)
-//         .tryCollectInto(&buffer, std.BoundedArray(u8, 7).append);
-//
-//     try std.testing.expectEqual(5, n);
-//     try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer.slice());
-// }
-//
-// test "from slice collect ArrayList (alloc)" {
-//     var list = std.ArrayList(u8).init(std.testing.allocator);
-//     defer list.deinit();
-//
-//     const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
-//         .map(u8, firstChar)
-//         .filter(std.ascii.isLower)
-//         .tryCollectInto(&list, std.ArrayList(u8).append);
-//
-//     try std.testing.expectEqual(5, n);
-//     try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, list.items[0..n]);
-// }
+test "from slice collect BoundedArray" {
+    // TODO: fix this tests for zig version: 0.15
+    if (!is_zig_0_14) return error.SkipZigTest;
+
+    var buffer: std.BoundedArray(u8, 7) = try .init(0);
+
+    const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .tryCollectInto(&buffer, std.BoundedArray(u8, 7).append);
+
+    try std.testing.expectEqual(5, n);
+    try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, buffer.slice());
+}
+
+test "from slice collect ArrayList (alloc)" {
+    // TODO: fix this tests for zig version: 0.15
+    if (!is_zig_0_14) return error.SkipZigTest;
+
+    var list = std.ArrayList(u8).init(std.testing.allocator);
+    defer list.deinit();
+
+    const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .tryCollectInto(&list, std.ArrayList(u8).append);
+
+    try std.testing.expectEqual(5, n);
+    try std.testing.expectEqualDeep(&[_]u8{ 'x', 'c', 'd', 'e', 'f' }, list.items[0..n]);
+}
 
 test "from slice collect AutoHashMap (alloc)" {
     var map = std.AutoHashMap(usize, u8).init(std.testing.allocator);
@@ -380,6 +418,24 @@ test "chain" {
     try std.testing.expectEqual('a', it.next().?);
     try std.testing.expectEqual('c', it.next().?);
     try std.testing.expectEqual(null, it.next());
+}
+
+test "chain count" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB", ' '))
+        .chain(std.mem.tokenizeScalar(u8, "ccc DDD", ' '))
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower);
+
+    try std.testing.expectEqual(2, it.count());
+}
+
+test "chain nth" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB", ' '))
+        .chain(std.mem.tokenizeScalar(u8, "ccc DDD", ' '))
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower);
+
+    try std.testing.expectEqual('c', it.nth(1).?);
 }
 
 test "chain 3" {

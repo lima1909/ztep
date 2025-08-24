@@ -325,11 +325,10 @@ pub fn StepBy(Iter: type, Item: type, step: usize) type {
             self.first_take = false;
 
             var i: usize = 0;
-            while (self.iter.next()) |item| {
+            while (self.iter.next()) |item| : (i += 1) {
                 if (i == step_size) {
                     return item;
                 }
-                i += 1;
             }
             return null;
         }

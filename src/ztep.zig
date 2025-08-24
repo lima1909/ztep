@@ -149,9 +149,8 @@ pub fn Iterator(Iter: type) type {
             var iter = &@constCast(self).iter;
 
             var index: usize = 0;
-            while (iter.next()) |item| {
+            while (iter.next()) |item| : (index += 1) {
                 try iterFn(containerPtr, item);
-                index += 1;
             }
             return index;
         }
@@ -163,11 +162,10 @@ pub fn Iterator(Iter: type) type {
             var index: usize = 0;
             const len = buffer.len;
 
-            while (iter.next()) |item| {
+            while (iter.next()) |item| : (index += 1) {
                 if (index == len) return error.IndexOutOfBound;
 
                 buffer[index] = item;
-                index += 1;
             }
 
             return index;
