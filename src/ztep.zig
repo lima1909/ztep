@@ -218,6 +218,9 @@ pub fn Iterator(Iter: type) type {
         pub fn count(self: *const @This()) usize {
             var iter = &@constCast(self).iter;
 
+            if (std.meta.hasMethod(Iter, "count"))
+                return iter.count();
+
             var counter: usize = 0;
             while (iter.next() != null) : (counter += 1) {}
             return counter;
@@ -261,7 +264,19 @@ pub fn Slice(slice: anytype) type {
             self.end -= 1;
             return self.items[self.end];
         }
+
+        pub fn count(self: *@This()) usize {
+            const c = self.end - self.front;
+            self.front = self.end;
+            return c;
+        }
     };
+}
+
+test "slice count" {
+    var it = fromSlice(&[_][]const u8{ "a", "BB", "ccc" }).iter;
+
+    try std.testing.expectEqual(3, it.count());
 }
 
 test "slice next" {
@@ -273,6 +288,8 @@ test "slice next" {
 
     try std.testing.expectEqual(null, it.next());
     try std.testing.expectEqual(null, it.nextBack());
+
+    try std.testing.expectEqual(0, it.count());
 }
 
 test "slice nextBack" {
@@ -284,6 +301,8 @@ test "slice nextBack" {
 
     try std.testing.expectEqual(null, it.next());
     try std.testing.expectEqual(null, it.nextBack());
+
+    try std.testing.expectEqual(0, it.count());
 }
 
 test "slice next and nextBack" {
@@ -295,6 +314,8 @@ test "slice next and nextBack" {
 
     try std.testing.expectEqual(null, it.nextBack());
     try std.testing.expectEqual(null, it.next());
+
+    try std.testing.expectEqual(0, it.count());
 }
 
 test "slice next and nextBack 2" {

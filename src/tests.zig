@@ -56,6 +56,22 @@ test "extend" {
     try std.testing.expectEqual(null, it.next());
 }
 
+test "extend map count" {
+    var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+        .map(u8, firstChar);
+
+    try std.testing.expectEqual(3, it.count());
+    try std.testing.expectEqual(0, it.count());
+}
+
+test "fromSlice map count" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .map(u8, firstChar);
+
+    try std.testing.expectEqual(3, it.count());
+    try std.testing.expectEqual(0, it.count());
+}
+
 test "extend map" {
     var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .map(u8, firstChar)
@@ -103,6 +119,8 @@ test "filter and map" {
 
     try std.testing.expectEqual('B', it.next().?);
     try std.testing.expectEqual(null, it.next());
+
+    try std.testing.expectEqual(0, it.count());
 }
 
 test "two instances from the same Iterator" {
@@ -583,6 +601,10 @@ const TestIter = struct {
         if (self.counter > 1) return null;
         return self.counter;
     }
+
+    pub fn count(_: *@This()) usize {
+        return 7;
+    }
 };
 
 test "peekable count one next calls = 2" {
@@ -606,4 +628,74 @@ test "peekable count two next calls = 3" {
     try std.testing.expectEqual(null, it.peek());
 
     try std.testing.expectEqual(3, it.iter.counter);
+}
+
+test "count No next call" {
+    var it = extend(TestIter{});
+
+    try std.testing.expectEqual(7, it.count());
+    try std.testing.expectEqual(0, it.iter.counter);
+}
+
+test "map count No next call" {
+    var it = extend(TestIter{})
+        .map(u8, struct {
+        fn map(u: u8) u8 {
+            return u;
+        }
+    }.map);
+
+    try std.testing.expectEqual(7, it.count());
+    try std.testing.expectEqual(0, it.iter.iter.counter);
+}
+
+test "map-map count No next call" {
+    var it = extend(TestIter{})
+        .map(u8, struct {
+            fn map1(u: u8) u8 {
+                return u;
+            }
+        }.map1)
+        .map(u8, struct {
+        fn map2(u: u8) u8 {
+            return u;
+        }
+    }.map2);
+
+    try std.testing.expectEqual(7, it.count());
+    try std.testing.expectEqual(0, it.iter.iter.iter.counter);
+}
+
+test "filter-map count next call" {
+    var it = extend(TestIter{})
+        .filter(struct {
+            fn filter(_: u8) bool {
+                return true;
+            }
+        }.filter)
+        .map(u8, struct {
+        fn map(u: u8) u8 {
+            return u;
+        }
+    }.map);
+
+    try std.testing.expectEqual(1, it.count());
+    try std.testing.expectEqual(2, it.iter.iter.iter.counter);
+}
+
+test "map-filter count next call" {
+    var it = extend(TestIter{})
+        .map(u8, struct {
+            fn map(u: u8) u8 {
+                return u;
+            }
+        }.map)
+        .filter(struct {
+        fn filter(_: u8) bool {
+            return true;
+        }
+    }.filter);
+
+    try std.testing.expectEqual(1, it.count());
+    try std.testing.expectEqual(2, it.iter.iter.iter.counter);
 }

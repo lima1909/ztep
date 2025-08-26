@@ -8,6 +8,11 @@ pub fn Map(Iter: type, Item: type, To: type) type {
         pub fn next(self: *@This()) ?To {
             return self.mapFn(self.iter.next() orelse return null);
         }
+
+        pub fn count(self: *@This()) usize {
+            var p: *@import("ztep.zig").Iterator(Iter) = @fieldParentPtr("iter", self.iter);
+            return p.count();
+        }
     };
 }
 
@@ -22,10 +27,15 @@ test "map" {
         }.firstChar,
     };
 
+    try std.testing.expectEqual(3, it.count());
+    tokensIt.reset();
+
     try std.testing.expectEqual('x', it.next().?);
     try std.testing.expectEqual('B', it.next().?);
     try std.testing.expectEqual('c', it.next().?);
     try std.testing.expectEqual(null, it.next());
+
+    try std.testing.expectEqual(0, it.count());
 }
 
 pub fn Filter(Iter: type, Item: type) type {
