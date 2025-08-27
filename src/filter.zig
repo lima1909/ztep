@@ -1,0 +1,34 @@
+const std = @import("std");
+
+pub fn Filter(Iter: type, Item: type) type {
+    return struct {
+        iter: *Iter,
+        filterFn: *const fn (Item) bool,
+
+        pub fn next(self: *@This()) ?Item {
+            while (self.iter.next()) |item| {
+                if (self.filterFn(item)) {
+                    return item;
+                }
+            }
+
+            return null;
+        }
+    };
+}
+
+test "filter" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = Filter(@TypeOf(tokensIt), []const u8){
+        .iter = &tokensIt,
+        .filterFn = struct {
+            fn firstCharUpper(in: []const u8) bool {
+                return std.ascii.isUpper(in[0]);
+            }
+        }.firstCharUpper,
+    };
+
+    try std.testing.expectEqualStrings("BB", it.next().?);
+    try std.testing.expectEqualStrings("DDD", it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}

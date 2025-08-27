@@ -247,6 +247,19 @@ test "from slice with skip twice" {
     try std.testing.expectEqual(null, it.next());
 }
 
+test "from slice with skip twice count" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "y", "ccc" })
+        .skip(1)
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .skip(1);
+
+    try std.testing.expectEqual(1, it.count());
+
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(0, it.count());
+}
+
 test "from slice with skip and count after filter" {
     var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
         .map(u8, firstChar)
@@ -482,10 +495,18 @@ test "zip char" {
 
 test "zip string" {
     var it = extend(std.mem.tokenizeScalar(u8, "a BB", ' '))
-        .zip(fromSlice(&[_][]const u8{ "e", "F" }));
+        .zip(fromSlice(&[_][]const u8{ "e", "F", "G" }));
 
     try std.testing.expectEqualDeep(.{ "a", "e" }, it.next().?);
     try std.testing.expectEqualDeep(.{ "BB", "F" }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "zip string count" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB", ' '))
+        .zip(fromSlice(&[_][]const u8{ "e", "F", "G" }));
+
+    try std.testing.expectEqual(2, it.count());
     try std.testing.expectEqual(null, it.next());
 }
 
@@ -592,6 +613,23 @@ test "peekable filter and map" {
     try std.testing.expectEqual(null, it.peek());
 }
 
+test "peekable count" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a BB ", ' '))
+        .map(u8, firstChar)
+        .peekable();
+
+    try std.testing.expectEqual('a', it.peek().?);
+    try std.testing.expectEqual(2, it.count());
+
+    it = extend(std.mem.tokenizeScalar(u8, "a BB ", ' '))
+        .map(u8, firstChar)
+        .peekable();
+
+    try std.testing.expectEqual('a', it.peek().?);
+    try std.testing.expectEqual('a', it.next().?);
+    try std.testing.expectEqual(1, it.count());
+}
+
 const TestIter = struct {
     counter: u8 = 0,
 
@@ -639,11 +677,14 @@ test "count No next call" {
 
 test "map count No next call" {
     var it = extend(TestIter{})
-        .map(u8, struct {
-        fn map(u: u8) u8 {
-            return u;
-        }
-    }.map);
+        .map(
+        u8,
+        struct {
+            fn map(u: u8) u8 {
+                return u;
+            }
+        }.map,
+    );
 
     try std.testing.expectEqual(7, it.count());
     try std.testing.expectEqual(0, it.iter.iter.counter);
@@ -656,11 +697,52 @@ test "map-map count No next call" {
                 return u;
             }
         }.map1)
-        .map(u8, struct {
-        fn map2(u: u8) u8 {
-            return u;
-        }
-    }.map2);
+        .map(
+        u8,
+        struct {
+            fn map2(u: u8) u8 {
+                return u;
+            }
+        }.map2,
+    );
+
+    try std.testing.expectEqual(7, it.count());
+    try std.testing.expectEqual(0, it.iter.iter.iter.counter);
+}
+
+test "map-enumerate count No next call" {
+    var it = extend(TestIter{})
+        .map(
+            u8,
+            struct {
+                fn map(u: u8) u8 {
+                    return u;
+                }
+            }.map,
+        )
+        .enumerate();
+
+    try std.testing.expectEqual(7, it.count());
+    try std.testing.expectEqual(0, it.iter.iter.iter.counter);
+}
+
+test "map-inspect count No next call" {
+    var it = extend(TestIter{})
+        .map(
+            u8,
+            struct {
+                fn map(u: u8) u8 {
+                    return u;
+                }
+            }.map,
+        )
+        .inspect(
+        struct {
+            fn inspect(u: u8) u8 {
+                return u;
+            }
+        }.inspect,
+    );
 
     try std.testing.expectEqual(7, it.count());
     try std.testing.expectEqual(0, it.iter.iter.iter.counter);

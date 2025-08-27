@@ -1,0 +1,75 @@
+const std = @import("std");
+const Iterator = @import("iter.zig").Iterator;
+
+pub fn Skip(Iter: type, Item: type) type {
+    return struct {
+        iter: *Iter,
+        parent: *Iterator(Iter),
+        n: usize,
+
+        pub fn init(iter: *Iter, n: usize) @This() {
+            return .{
+                .iter = iter,
+                .n = n,
+                .parent = @fieldParentPtr("iter", iter),
+            };
+        }
+
+        pub fn next(self: *@This()) ?Item {
+            for (0..self.n) |_| {
+                _ = self.iter.next() orelse return null;
+            }
+            // disable skip
+            self.n = 0;
+
+            return self.iter.next();
+        }
+
+        pub fn count(self: *@This()) usize {
+            if (self.n > 0) {
+                if (self.parent.nth(self.n - 1) == null) {
+                    return 0;
+                }
+            }
+
+            return self.parent.count();
+        }
+    };
+}
+
+test "skip" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = Skip(@TypeOf(tokensIt), []const u8).init(&tokensIt, 2);
+
+    try std.testing.expectEqual(2, it.count());
+    it.iter.reset();
+
+    try std.testing.expectEqualStrings("ccc", it.next().?);
+    try std.testing.expectEqualStrings("DDD", it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "skip on the end" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = Skip(@TypeOf(tokensIt), []const u8).init(&tokensIt, 4);
+
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "skip after the end" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = Skip(@TypeOf(tokensIt), []const u8).init(&tokensIt, 5);
+
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "skip nothing" {
+    var tokensIt = std.mem.tokenizeScalar(u8, "a BB ccc DDD", ' ');
+    var it = Skip(@TypeOf(tokensIt), []const u8).init(&tokensIt, 0);
+
+    try std.testing.expectEqualStrings("a", it.next().?);
+    try std.testing.expectEqualStrings("BB", it.next().?);
+    try std.testing.expectEqualStrings("ccc", it.next().?);
+    try std.testing.expectEqualStrings("DDD", it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
