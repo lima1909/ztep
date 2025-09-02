@@ -1,6 +1,5 @@
 const std = @import("std");
-
-const Iterator = @import("iter.zig").Iterator;
+const Iterator = @import("../iter.zig").Iterator;
 
 /// Create a new Iterator for the given slice.
 pub fn fromSlice(comptime slice: anytype) Iterator(Slice(slice)) {
@@ -37,6 +36,18 @@ pub fn Slice(slice: anytype) type {
 
             self.end -= 1;
             return self.items[self.end];
+        }
+
+        pub fn nth(self: *@This(), n: usize) ?Item {
+            if (n == 0) return self.next();
+
+            if (n >= self.end) {
+                self.front = n;
+                return null;
+            }
+
+            self.front = n;
+            return self.next();
         }
 
         pub fn count(self: *@This()) usize {
@@ -147,4 +158,28 @@ test "slice peek empty" {
     try std.testing.expectEqual(null, it.peek());
     try std.testing.expectEqual(null, it.next());
     try std.testing.expectEqual(null, it.peek());
+}
+
+test "slice nth" {
+    {
+        // nth = 0
+        var it = fromSlice(&[_][]const u8{ "a", "BB" }).iter;
+        try std.testing.expectEqualStrings("a", it.nth(0).?);
+        try std.testing.expectEqualStrings("BB", it.next().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 1 (= last)
+        var it = fromSlice(&[_][]const u8{ "a", "BB" }).iter;
+        try std.testing.expectEqualStrings("BB", it.nth(1).?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 2 (= after last)
+        var it = fromSlice(&[_][]const u8{ "a", "BB" }).iter;
+        try std.testing.expectEqual(null, it.nth(2));
+        try std.testing.expectEqual(null, it.next());
+    }
 }

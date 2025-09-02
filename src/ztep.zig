@@ -1,18 +1,18 @@
 const std = @import("std");
 
 pub const Iterator = @import("iter.zig").Iterator;
-
 pub const extend = @import("iter.zig").extend;
-pub const fromSlice = @import("slice.zig").fromSlice;
-pub const range = @import("range.zig").range;
-pub const rangeIncl = @import("range.zig").rangeIncl;
-pub const fromFn = @import("fromfn.zig").fromFn;
-pub const empty = @import("repeatn.zig").empty;
-pub const once = @import("repeatn.zig").once;
-pub const repeatN = @import("repeatn.zig").repeatN;
-pub const extendWithError = @import("with_error.zig").extendWithError;
-pub const toIterator = @import("to_iter.zig").toIterator;
-pub const reverse = @import("to_iter.zig").reverse;
+
+pub const fromSlice = @import("producer/slice.zig").fromSlice;
+pub const range = @import("producer/range.zig").range;
+pub const rangeIncl = @import("producer/range.zig").rangeIncl;
+pub const fromFn = @import("producer/fromfn.zig").fromFn;
+pub const empty = @import("producer/repeatn.zig").empty;
+pub const once = @import("producer/repeatn.zig").once;
+pub const repeatN = @import("producer/repeatn.zig").repeatN;
+pub const extendWithError = @import("producer/with_error.zig").extendWithError;
+pub const toIterator = @import("producer/to_iter.zig").toIterator;
+pub const reverse = @import("producer/to_iter.zig").reverse;
 
 test {
     _ = @import("./tests.zig");
@@ -29,11 +29,12 @@ test {
     _ = @import("take.zig");
     _ = @import("zip.zig");
 
-    _ = @import("fromfn.zig");
     _ = @import("iter.zig");
-    _ = @import("range.zig");
-    _ = @import("repeatn.zig");
-    _ = @import("slice.zig");
-    _ = @import("to_iter.zig");
-    _ = @import("with_error.zig");
+
+    _ = @import("producer/fromfn.zig");
+    _ = @import("producer/range.zig");
+    _ = @import("producer/repeatn.zig");
+    _ = @import("producer/slice.zig");
+    _ = @import("producer/to_iter.zig");
+    _ = @import("producer/with_error.zig");
 }

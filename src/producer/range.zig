@@ -1,5 +1,5 @@
 const std = @import("std");
-const Iterator = @import("iter.zig").Iterator;
+const Iterator = @import("../iter.zig").Iterator;
 
 /// Create a new Iterator for the given range, from start to exclude end.
 pub fn range(Item: type, start: Item, end: Item) Iterator(Range(Item)) {

@@ -1,5 +1,5 @@
 const std = @import("std");
-const Iterator = @import("iter.zig").Iterator;
+const Iterator = @import("../iter.zig").Iterator;
 
 /// Extend an Iterator which has a next-method, which returns an error_union (next() anyerror!Item).
 ///

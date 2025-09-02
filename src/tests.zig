@@ -425,6 +425,11 @@ test "nth empty" {
     try std.testing.expectEqual(null, fromSlice(&[_][]const u8{}).nth(0));
 }
 
+test "nth 0" {
+    try std.testing.expectEqualStrings("a", extend(std.mem.tokenizeScalar(u8, "a b", ' ')).nth(0).?);
+    try std.testing.expectEqualStrings("a", fromSlice(&[_][]const u8{ "a", "b" }).nth(0).?);
+}
+
 test "find" {
     var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '));
 

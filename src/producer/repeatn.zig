@@ -1,5 +1,5 @@
 const std = @import("std");
-const Iterator = @import("iter.zig").Iterator;
+const Iterator = @import("../iter.zig").Iterator;
 
 /// Creates an iterator that yields nothing.
 pub fn empty(Item: type) Iterator(RepeatN(Item)) {
@@ -31,6 +31,18 @@ pub fn RepeatN(Item: type) type {
         pub fn peek(self: *@This()) ?Item {
             if (self.ntimes == 0) return null;
             return self.item;
+        }
+
+        pub fn nth(self: *@This(), n: usize) ?Item {
+            if (n == 0) return self.next();
+
+            if (n >= self.ntimes) {
+                self.ntimes = 0;
+                return null;
+            }
+
+            self.ntimes -= n;
+            return self.next();
         }
 
         pub fn count(self: *@This()) usize {
@@ -130,4 +142,28 @@ test "repeatN count" {
     try std.testing.expectEqual('a', it.next().?);
     try std.testing.expectEqual(1, it.count());
     try std.testing.expectEqual(null, it.next());
+}
+
+test "slice nth" {
+    {
+        // nth = 0
+        var it = repeatN(u8, 'a', 2).iter;
+        try std.testing.expectEqual('a', it.nth(0).?);
+        try std.testing.expectEqual('a', it.next().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 1 (= last)
+        var it = repeatN(u8, 'a', 2).iter;
+        try std.testing.expectEqual('a', it.nth(1).?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 2 (= after last)
+        var it = repeatN(u8, 'a', 2).iter;
+        try std.testing.expectEqual(null, it.nth(2));
+        try std.testing.expectEqual(null, it.next());
+    }
 }

@@ -1,5 +1,5 @@
 const std = @import("std");
-const Iterator = @import("iter.zig").Iterator;
+const Iterator = @import("../iter.zig").Iterator;
 
 /// Create a Wrapper for an Iterator, which has a next-method with a different name.
 /// You can for example, use this Wrapper, if you want to iterate from the end, when the Iterator has a method nextBack.

@@ -1,5 +1,5 @@
 const std = @import("std");
-const Iterator = @import("iter.zig").Iterator;
+const Iterator = @import("../iter.zig").Iterator;
 
 /// Creates an custom iterator with the initialized (start) value and the provided (next) function.
 pub fn fromFn(Item: type, init: Item, nextFn: *const fn (*Item) ?Item) Iterator(FromFn(Item)) {
