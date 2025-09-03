@@ -645,6 +645,10 @@ const TestIter = struct {
         return self.counter;
     }
 
+    pub fn nth(_: *@This(), _: usize) ?u8 {
+        return 5;
+    }
+
     pub fn count(_: *@This()) usize {
         return 7;
     }
@@ -785,4 +789,34 @@ test "map-filter count next call" {
 
     try std.testing.expectEqual(1, it.count());
     try std.testing.expectEqual(2, it.iter.iter.iter.counter);
+}
+
+test "peekable nth" {
+    {
+        var it = extend(TestIter{}).peekable();
+        try std.testing.expectEqual(5, it.nth(0).?);
+        try std.testing.expectEqual(0, it.iter.counter);
+    }
+
+    {
+        var it = extend(TestIter{}).peekable();
+        try std.testing.expectEqual(1, it.peek().?);
+        try std.testing.expectEqual(1, it.nth(0).?);
+        try std.testing.expectEqual(1, it.iter.counter);
+    }
+
+    {
+        var it = extend(TestIter{}).peekable();
+        try std.testing.expectEqual(1, it.peek().?);
+        try std.testing.expectEqual(5, it.nth(1).?);
+        try std.testing.expectEqual(1, it.iter.counter);
+    }
+
+    {
+        var it = extend(TestIter{}).peekable();
+        try std.testing.expectEqual(1, it.next().?);
+        try std.testing.expectEqual(null, it.peek());
+        try std.testing.expectEqual(null, it.nth(1));
+        try std.testing.expectEqual(2, it.iter.counter);
+    }
 }

@@ -24,9 +24,13 @@ pub fn Range(Item: type) type {
         end: Item,
         inclusive: bool = false,
 
+        inline fn isOnTheEnd(self: *const @This()) bool {
+            return (self.start > self.end or (!self.inclusive and self.start == self.end));
+        }
+
         /// next from the front-side
         pub fn next(self: *@This()) ?Item {
-            if (self.start > self.end or (!self.inclusive and self.start == self.end)) return null;
+            if (self.isOnTheEnd()) return null;
 
             const start = self.start;
             self.start += 1;
@@ -35,16 +39,41 @@ pub fn Range(Item: type) type {
 
         /// next from the end-side
         pub fn nextBack(self: *@This()) ?Item {
-            if (self.start > self.end or (!self.inclusive and self.start == self.end)) return null;
+            if (self.isOnTheEnd()) return null;
 
             self.end -= 1;
             return self.end;
         }
 
+        pub fn nth(self: *@This(), n: usize) ?Item {
+            switch (Item) {
+                u8, u16, u32, u64, usize => {
+                    if (n == 0) return self.next();
+
+                    if (self.isOnTheEnd()) {
+                        self.start = self.end;
+                        return null;
+                    }
+
+                    self.start += @intCast(n);
+                    return self.next();
+                },
+                else => {
+                    var i: usize = 0;
+                    while (self.next()) |item| : (i += 1) {
+                        if (i == n) {
+                            return item;
+                        }
+                    }
+                    return null;
+                },
+            }
+        }
+
         pub fn count(self: *@This()) usize {
             switch (Item) {
                 u8, u16, u32, u64, usize => {
-                    if (self.start > self.end or (!self.inclusive and self.start == self.end)) return 0;
+                    if (self.isOnTheEnd()) return 0;
 
                     const c = self.end - self.start;
                     self.start = self.end;
@@ -179,4 +208,76 @@ test "range char count" {
     try std.testing.expectEqual('b', it.next().?);
     try std.testing.expectEqual(1, it.count());
     try std.testing.expectEqual(null, it.next());
+}
+
+test "range char nth" {
+    {
+        // nth = 0
+        var it = range(u8, 'a', 'c').iter;
+        try std.testing.expectEqual('a', it.nth(0).?);
+        try std.testing.expectEqual('b', it.next().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 1 (= last)
+        var it = range(u8, 'a', 'c').iter;
+        try std.testing.expectEqual('b', it.nth(1).?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 2 (= after last)
+        var it = range(u8, 'a', 'c').iter;
+        try std.testing.expectEqual(null, it.nth(2));
+        try std.testing.expectEqual(null, it.next());
+    }
+}
+
+test "range i32 nth" {
+    {
+        // nth = 0
+        var it = range(i32, -2, 0).iter;
+        try std.testing.expectEqual(-2, it.nth(0).?);
+        try std.testing.expectEqual(-1, it.next().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 1 (= last)
+        var it = range(i32, -2, 0).iter;
+        try std.testing.expectEqual(-1, it.nth(1).?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 2 (= after last)
+        var it = range(i32, -2, 0).iter;
+        try std.testing.expectEqual(null, it.nth(2));
+        try std.testing.expectEqual(null, it.next());
+    }
+}
+
+test "rangeIncl char nth" {
+    {
+        // nth = 0
+        var it = rangeIncl(u8, 'a', 'b').iter;
+        try std.testing.expectEqual('a', it.nth(0).?);
+        try std.testing.expectEqual('b', it.next().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 1 (= last)
+        var it = rangeIncl(u8, 'a', 'b').iter;
+        try std.testing.expectEqual('b', it.nth(1).?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // nth = 2 (= after last)
+        var it = rangeIncl(u8, 'a', 'b').iter;
+        try std.testing.expectEqual(null, it.nth(2));
+        try std.testing.expectEqual(null, it.next());
+    }
 }

@@ -205,6 +205,9 @@ pub fn Iterator(Iter: type) type {
         pub fn nth(self: *const @This(), n: usize) ?Item {
             var iter = &@constCast(self).iter;
 
+            if (std.meta.hasMethod(Iter, "nth"))
+                return iter.nth(n);
+
             var i: usize = 0;
             while (iter.next()) |item| : (i += 1) {
                 if (i == n) {

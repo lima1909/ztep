@@ -35,6 +35,19 @@ pub fn Peekable(Iter: type, Item: type) type {
             return self.peeked.?;
         }
 
+        pub fn nth(self: *@This(), n: usize) ?Item {
+            if (self.peeked == null)
+                return self.parent.nth(n);
+
+            if (self.peeked.? == null)
+                return null;
+
+            if (n == 0)
+                return self.peeked.?;
+
+            return self.parent.nth(n - 1);
+        }
+
         pub fn count(self: *@This()) usize {
             if (self.peeked == null)
                 return self.parent.count();
