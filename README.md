@@ -12,6 +12,12 @@
 
 It is heavily inspired by the iterators in the Rust standard library [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html).
 
+
+#### Supported zig-versions:
+
+- 0.14.1
+- 0.15.1
+
 ### Examples
 
 #### Extend a zig-std-iterator: `std.mem.TokenIterator`
