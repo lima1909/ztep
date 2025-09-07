@@ -110,10 +110,8 @@ pub fn Iterator(Iter: type) type {
         }
 
         /// Creates an iterator starting at the same point, but stepping by the given amount at each iteration.
-        pub fn stepBy(self: *const @This(), comptime step: usize) Iterator(StepBy(Iter, Item, step)) {
-            return .{ .iter = .{
-                .iter = &@constCast(self).iter,
-            } };
+        pub fn stepBy(self: *const @This(), comptime step: usize) Iterator(StepBy(Iter, Item)) {
+            return .{ .iter = .init(&@constCast(self).iter, step) };
         }
 
         /// Takes two iterators and creates a new iterator over both in sequence.

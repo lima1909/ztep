@@ -159,12 +159,90 @@ test "map-fold" {
     try std.testing.expectEqual(7, len);
 }
 
+test "map-stepBy-fold" {
+    {
+        const len = extend(std.mem.tokenizeScalar(u8, "xx BB ccc", ' '))
+            .stepBy(2)
+            .map([]const u8, struct {
+                fn doNothing(in: []const u8) []const u8 {
+                    return in;
+                }
+            }.doNothing)
+            .fold(usize, 0, addLen);
+
+        try std.testing.expectEqual(5, len);
+    }
+
+    {
+        const len = fromSlice(&[_][]const u8{ "xx", "BB", "ccc" })
+            .stepBy(2)
+            .map([]const u8, struct {
+                fn doNothing(in: []const u8) []const u8 {
+                    return in;
+                }
+            }.doNothing)
+            .fold(usize, 0, addLen);
+
+        try std.testing.expectEqual(5, len);
+    }
+}
+
 test "filter-fold" {
     const len = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
         .filter(isFirstCharUpper)
         .fold(usize, 0, addLen);
 
     try std.testing.expectEqual(2, len);
+}
+
+test "filter-stepBy-fold" {
+    {
+        const len = extend(std.mem.tokenizeScalar(u8, "x BB ccc DD e FFF", ' '))
+            .filter(isFirstCharUpper)
+            .stepBy(2)
+            .fold(usize, 0, addLen);
+
+        try std.testing.expectEqual(5, len);
+    }
+
+    {
+        const len = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "DD", "e", "FFF" })
+            .filter(isFirstCharUpper)
+            .stepBy(2)
+            .fold(usize, 0, addLen);
+
+        try std.testing.expectEqual(5, len);
+    }
+    {
+        const len = range(u8, 'A', 'D')
+            .filter(std.ascii.isUpper)
+            .stepBy(2)
+            .fold(usize, 0, struct {
+            fn add(accum: usize, _: u8) usize {
+                return accum + 1;
+            }
+        }.add);
+
+        try std.testing.expectEqual(2, len);
+    }
+
+    {
+        const len = extend(std.mem.tokenizeScalar(u8, "BB ccc DD e FFF", ' '))
+            .stepBy(2)
+            .filter(isFirstCharUpper)
+            .fold(usize, 0, addLen);
+
+        try std.testing.expectEqual(7, len);
+    }
+
+    {
+        const len = fromSlice(&[_][]const u8{ "BB", "ccc", "DD", "e", "FFF" })
+            .stepBy(2)
+            .filter(isFirstCharUpper)
+            .fold(usize, 0, addLen);
+
+        try std.testing.expectEqual(7, len);
+    }
 }
 
 test "filter-reduce" {
@@ -547,6 +625,16 @@ test "stepBy" {
     try std.testing.expectEqual(null, it.next());
 }
 
+test "stepBy nth" {
+    var it = extend(std.mem.tokenizeScalar(u8, "a bb CC d e", ' '))
+        .stepBy(2)
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower);
+
+    try std.testing.expectEqual('e', it.nth(1).?);
+    try std.testing.expectEqual(null, it.next());
+}
+
 pub const IteratorWithError = struct {
     const innerArray = [_]usize{ 2, 3, 4, 5, 6 };
     n: usize = 0,
@@ -839,5 +927,19 @@ test "skip nth" {
         try std.testing.expectEqual(1, it.next().?);
         try std.testing.expectEqual(5, it.nth(1));
         try std.testing.expectEqual(1, it.iter.iter.counter);
+    }
+}
+
+test "stepBy next with nth" {
+    {
+        var it = extend(TestIter{}).stepBy(0);
+        try std.testing.expectEqual(5, it.next().?);
+        try std.testing.expectEqual(0, it.iter.iter.counter);
+    }
+
+    {
+        var it = extend(TestIter{}).stepBy(2);
+        try std.testing.expectEqual(5, it.next().?);
+        try std.testing.expectEqual(0, it.iter.iter.counter);
     }
 }

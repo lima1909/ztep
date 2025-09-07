@@ -41,12 +41,11 @@ pub fn Slice(slice: anytype) type {
         pub fn nth(self: *@This(), n: usize) ?Item {
             if (n == 0) return self.next();
 
+            self.front += n;
             if (n >= self.end) {
-                self.front = n;
                 return null;
             }
 
-            self.front = n;
             return self.next();
         }
 
