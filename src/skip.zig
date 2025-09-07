@@ -16,13 +16,14 @@ pub fn Skip(Iter: type, Item: type) type {
         }
 
         pub fn next(self: *@This()) ?Item {
-            for (0..self.n) |_| {
-                _ = self.iter.next() orelse return null;
-            }
+            if (self.n == 0)
+                return self.iter.next();
+
+            const n = self.n;
             // disable skip
             self.n = 0;
 
-            return self.iter.next();
+            return self.parent.nth(n);
         }
 
         pub fn nth(self: *@This(), n: usize) ?Item {

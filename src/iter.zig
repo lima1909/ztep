@@ -106,10 +106,7 @@ pub fn Iterator(Iter: type) type {
 
         /// Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
         pub fn take(self: *const @This(), n: usize) Iterator(Take(Iter, Item)) {
-            return .{ .iter = .{
-                .iter = &@constCast(self).iter,
-                .n = n,
-            } };
+            return .{ .iter = .init(&@constCast(self).iter, n) };
         }
 
         /// Creates an iterator starting at the same point, but stepping by the given amount at each iteration.
