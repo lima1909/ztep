@@ -13,11 +13,11 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - name: git checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ github.ref }}
       - name: zig
-        uses: goto-bus-stop/setup-zig@v2
+        uses: mlugg/setup-zig@v2
         with:
           version: ${{ matrix.zig_version }} 
       - name: check zig version
