@@ -33,6 +33,13 @@ pub fn RepeatN(Item: type) type {
             return self.item;
         }
 
+        pub fn last(self: *@This()) ?Item {
+            if (self.ntimes == 0) return null;
+
+            self.ntimes = 0;
+            return self.item;
+        }
+
         pub fn nth(self: *@This(), n: usize) ?Item {
             if (n == 0) return self.next();
 
@@ -144,7 +151,7 @@ test "repeatN count" {
     try std.testing.expectEqual(null, it.next());
 }
 
-test "slice nth" {
+test "repeatN nth" {
     {
         // nth = 0
         var it = repeatN(u8, 'a', 2).iter;
@@ -165,5 +172,45 @@ test "slice nth" {
         var it = repeatN(u8, 'a', 2).iter;
         try std.testing.expectEqual(null, it.nth(2));
         try std.testing.expectEqual(null, it.next());
+    }
+}
+
+test "repeatN last" {
+    {
+        var it = repeatN(u8, 'a', 2).iter;
+        try std.testing.expectEqual('a', it.last().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = repeatN(u8, 'a', 2).iter;
+        try std.testing.expectEqual('a', it.next().?);
+        try std.testing.expectEqual('a', it.last().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = repeatN(u8, 'a', 2).iter;
+        try std.testing.expectEqual(null, it.nth(2));
+        try std.testing.expectEqual(null, it.last());
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = empty(u8).iter;
+        try std.testing.expectEqual(null, it.last());
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = once(u8, 'a').iter;
+        try std.testing.expectEqual('a', it.last().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = once(u8, 'a').iter;
+        try std.testing.expectEqual('a', it.next().?);
+        try std.testing.expectEqual(null, it.last());
     }
 }
