@@ -3,34 +3,32 @@ const Iterator = @import("../iter.zig").Iterator;
 
 /// Create a new Iterator for the given range, from start to exclude end.
 pub fn range(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
-    return .{ .iter = Range(Item){
-        .start = start,
-        .end = end,
-    } };
+    return .{
+        .iter = Range(Item){
+            .start = start,
+            .end = end,
+        },
+    };
 }
 
 /// Create a new Iterator for the given range, like range, but the end is inclusive.
 pub fn rangeIncl(Item: type, start: Item, end: Item) Iterator(Range(Item)) {
-    return .{ .iter = Range(Item){
-        .start = start,
-        .end = end,
-        .inclusive = true,
-    } };
+    return .{
+        .iter = Range(Item){
+            .start = start,
+            .end = end + 1, // maybe gets an overflow?
+        },
+    };
 }
 
 pub fn Range(Item: type) type {
     return struct {
         start: Item,
         end: Item,
-        inclusive: bool = false,
-
-        inline fn isOnTheEnd(self: *const @This()) bool {
-            return (self.start > self.end or (!self.inclusive and self.start == self.end));
-        }
 
         /// next from the front-side
         pub fn next(self: *@This()) ?Item {
-            if (self.isOnTheEnd()) return null;
+            if (self.start >= self.end) return null;
 
             const start = self.start;
             self.start += 1;
@@ -39,26 +37,26 @@ pub fn Range(Item: type) type {
 
         /// next from the end-side
         pub fn nextBack(self: *@This()) ?Item {
-            if (self.isOnTheEnd()) return null;
+            if (self.start >= self.end) return null;
 
             self.end -= 1;
             return self.end;
         }
 
         pub fn last(self: *@This()) ?Item {
-            if (self.isOnTheEnd()) return null;
+            if (self.start >= self.end) return null;
 
-            self.start = self.end + 1;
-            return self.end - @intFromBool(!self.inclusive);
+            self.start = self.end;
+            return self.end - 1;
         }
 
         pub fn nth(self: *@This(), n: usize) ?Item {
-            switch (Item) {
-                u8, u16, u32, u64, usize => {
+            switch (@typeInfo(Item)) {
+                .int => {
                     if (n == 0) return self.next();
 
-                    if (self.isOnTheEnd()) {
-                        self.start = self.end + 1;
+                    if (self.start >= self.end) {
+                        self.start = self.end;
                         return null;
                     }
 
@@ -78,13 +76,13 @@ pub fn Range(Item: type) type {
         }
 
         pub fn count(self: *@This()) usize {
-            switch (Item) {
-                u8, u16, u32, u64, usize => {
-                    if (self.isOnTheEnd()) return 0;
+            switch (@typeInfo(Item)) {
+                .int => {
+                    if (self.start >= self.end) return 0;
 
                     const c = self.end - self.start;
-                    self.start = self.end + 1;
-                    return c;
+                    self.start = self.end;
+                    return @intCast(c);
                 },
                 else => {
                     var counter: usize = 0;
@@ -129,6 +127,40 @@ test "range i32 next" {
     try std.testing.expectEqualDeep(4, it.next());
     try std.testing.expectEqualDeep(null, it.next());
     try std.testing.expectEqualDeep(null, it.nextBack());
+}
+
+test "rangeInc negative i32 next" {
+    var it = rangeIncl(i32, -2, 2).iter;
+
+    try std.testing.expectEqualDeep(-2, it.next());
+    try std.testing.expectEqualDeep(-1, it.next());
+    try std.testing.expectEqualDeep(0, it.next());
+    try std.testing.expectEqualDeep(1, it.next());
+    try std.testing.expectEqualDeep(2, it.next());
+    try std.testing.expectEqualDeep(null, it.next());
+    try std.testing.expectEqualDeep(null, it.nextBack());
+}
+
+test "rangeInc negative i32 count" {
+    var it = rangeIncl(i32, -2, 2).iter;
+
+    try std.testing.expectEqual(5, it.count());
+}
+
+test "rangeInc negative i32 nth" {
+    var it = rangeIncl(i32, -2, 2).iter;
+
+    try std.testing.expectEqual(-1, it.nth(1).?);
+    try std.testing.expectEqual(2, it.nth(2).?);
+    try std.testing.expectEqualDeep(null, it.next());
+}
+
+test "range negative i32 nth" {
+    var it = range(i32, -2, 2).iter;
+
+    try std.testing.expectEqual(-1, it.nth(1).?);
+    try std.testing.expectEqual(null, it.nth(2));
+    try std.testing.expectEqualDeep(null, it.next());
 }
 
 test "range i32 back" {
@@ -318,15 +350,29 @@ test "range last" {
 
     {
         var it = rangeIncl(u8, 'a', 'b').iter;
+        try std.testing.expectEqual('a', it.nth(0).?);
+        try std.testing.expectEqual('b', it.last().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = rangeIncl(u8, 'a', 'b').iter;
         try std.testing.expectEqual(null, it.nth(2));
         try std.testing.expectEqual(null, it.last());
         try std.testing.expectEqual(null, it.next());
     }
 
-    // {
-    //     var it = rangeIncl(u8, 'a', 'b').iter;
-    //     try std.testing.expectEqual('b', it.nextBack().?);
-    //     try std.testing.expectEqual('a', it.last().?);
-    //     try std.testing.expectEqual(null, it.next());
-    // }
+    {
+        var it = rangeIncl(u8, 'a', 'b').iter;
+        try std.testing.expectEqual('b', it.nextBack().?);
+        try std.testing.expectEqual('a', it.last().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = range(u8, 'a', 'b').iter;
+        try std.testing.expectEqual('a', it.nextBack().?);
+        try std.testing.expectEqual(null, it.last());
+        try std.testing.expectEqual(null, it.next());
+    }
 }
