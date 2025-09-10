@@ -124,6 +124,7 @@ test "iterator with error" {
 | `nth`            | Consumes the iterator, returning the nth element.                                                      |
 | `peekable`       | Creates an iterator which can use the peek methods to look at the next element without consuming it.   |
 | `reduce`         | Reduces the elements to a single one, by repeatedly applying a reducing function.                      |
+| `reset`          | Reset the Base-Iterator, if the Iterator supports it.                                                  |
 | `skip`           | Creates an iterator that skips the first n elements.                                                   |
 | `stepBy`         | Creates an iterator starting at the same point, but stepping by the given amount at each iteration.    |
 | `take`           | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |

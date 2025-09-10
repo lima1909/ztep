@@ -57,6 +57,11 @@ pub fn Peekable(Iter: type, Item: type) type {
 
             return self.parent.count() + 1;
         }
+
+        pub fn reset(self: *@This()) void {
+            self.peeked = null;
+            return self.parent.reset();
+        }
     };
 }
 

@@ -19,6 +19,10 @@ pub fn Inspect(Iter: type, Item: type) type {
             return self.inspectFn(self.iter.next() orelse return null);
         }
 
+        pub fn reset(self: *@This()) void {
+            return self.parent.reset();
+        }
+
         pub fn count(self: *@This()) usize {
             return self.parent.count();
         }

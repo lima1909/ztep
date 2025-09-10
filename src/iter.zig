@@ -40,6 +40,10 @@ pub fn Iterator(Iter: type) type {
             return self.iter.next();
         }
 
+        pub fn reset(self: *const @This()) void {
+            @constCast(self).iter.reset();
+        }
+
         /// Transforms one iterator into another by a given mapping function.
         pub fn map(self: *const @This(), To: type, mapFn: *const fn (Item) To) Iterator(Map(Iter, Item, To)) {
             return .{ .iter = .init(&@constCast(self).iter, mapFn) };
@@ -47,18 +51,12 @@ pub fn Iterator(Iter: type) type {
 
         /// Creates an iterator which uses a function to determine if an element should be yielded.
         pub fn filter(self: *const @This(), filterFn: *const fn (Item) bool) Iterator(Filter(Iter, Item)) {
-            return .{ .iter = .{
-                .iter = &@constCast(self).iter,
-                .filterFn = filterFn,
-            } };
+            return .{ .iter = .init(&@constCast(self).iter, filterFn) };
         }
 
         /// Creates an iterator that both filters and maps in one call.
         pub fn filterMap(self: *const @This(), To: type, filterMapFn: *const fn (Item) ?To) Iterator(FilterMap(Iter, Item, To)) {
-            return .{ .iter = .{
-                .iter = &@constCast(self).iter,
-                .filterMapFn = filterMapFn,
-            } };
+            return .{ .iter = .init(&@constCast(self).iter, filterMapFn) };
         }
 
         /// Creates an iterator which gives the current iteration count as well as the next value.

@@ -38,6 +38,11 @@ pub fn Slice(slice: anytype) type {
             return self.items[self.end];
         }
 
+        pub fn reset(self: *@This()) void {
+            self.front = 0;
+            self.end = slice.len;
+        }
+
         pub fn last(self: *@This()) ?Item {
             if (self.front >= self.end) return null;
 
@@ -215,6 +220,32 @@ test "slice last" {
         var it = fromSlice(&[_][]const u8{ "a", "BB" }).iter;
         try std.testing.expectEqualStrings("BB", it.nextBack().?);
         try std.testing.expectEqualStrings("a", it.last().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+}
+
+test "slice reset" {
+    {
+        var it = fromSlice(&[_][]const u8{ "a", "BB" }).iter;
+        try std.testing.expectEqualStrings("a", it.next().?);
+        try std.testing.expectEqualStrings("BB", it.next().?);
+        try std.testing.expectEqual(null, it.next());
+
+        it.reset();
+        try std.testing.expectEqualStrings("a", it.next().?);
+        try std.testing.expectEqualStrings("BB", it.next().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = fromSlice(&[_][]const u8{ "a", "BB" });
+        try std.testing.expectEqualStrings("a", it.next().?);
+        try std.testing.expectEqualStrings("BB", it.next().?);
+        try std.testing.expectEqual(null, it.next());
+
+        it.reset();
+        try std.testing.expectEqualStrings("a", it.next().?);
+        try std.testing.expectEqualStrings("BB", it.next().?);
         try std.testing.expectEqual(null, it.next());
     }
 }

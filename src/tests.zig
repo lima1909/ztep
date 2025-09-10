@@ -943,3 +943,35 @@ test "stepBy next with nth" {
         try std.testing.expectEqual(0, it.iter.iter.counter);
     }
 }
+
+test "reset extend" {
+    var it = extend(std.mem.tokenizeScalar(u8, "x BB ccc", ' '))
+        .map(u8, firstChar);
+    try std.testing.expectEqual('x', it.next().?);
+
+    it.reset();
+    try std.testing.expectEqual('x', it.next().?);
+}
+
+test "reset slice peekable" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .inspect(
+            struct {
+                fn inspect(u: u8) u8 {
+                    return u;
+                }
+            }.inspect,
+        )
+        .enumerate()
+        .peekable();
+
+    try std.testing.expectEqual(.{ 0, 'x' }, it.peek().?);
+    try std.testing.expectEqual(.{ 0, 'x' }, it.next().?);
+    try std.testing.expectEqual(.{ 1, 'c' }, it.peek().?);
+
+    it.reset();
+    try std.testing.expectEqual(.{ 0, 'x' }, it.peek().?);
+    try std.testing.expectEqual(.{ 0, 'x' }, it.next().?);
+}

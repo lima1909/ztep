@@ -20,6 +20,11 @@ pub fn Enumerate(Iter: type, Item: type) type {
             return .{ self.index, item };
         }
 
+        pub fn reset(self: *@This()) void {
+            self.index = 0;
+            return self.parent.reset();
+        }
+
         pub fn count(self: *@This()) usize {
             return self.parent.count();
         }

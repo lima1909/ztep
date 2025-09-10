@@ -19,6 +19,10 @@ pub fn Map(Iter: type, Item: type, To: type) type {
             return self.mapFn(self.iter.next() orelse return null);
         }
 
+        pub fn reset(self: *@This()) void {
+            return self.parent.reset();
+        }
+
         pub fn count(self: *@This()) usize {
             return self.parent.count();
         }
