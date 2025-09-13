@@ -12,6 +12,7 @@
 
 It is heavily inspired by the iterators in the Rust standard library [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html).
 
+This also includes **optimizations** for special iterators, such as for `arrays`, where it is easy to jump to a specific item (position).
 
 #### Supported zig-versions:
 
@@ -140,14 +141,14 @@ Try to rename all files from a given list, with `tryForEach`.
 
 ```zig
 fn rename(fileName: []const u8) !void {
-   const newFileName = try std.mem.concat(std.testing.allocator, u8, &[_][]const u8{ fileName, ".old" });
+   const newFileName = try std.mem.concat(std.testing.allocator, u8, &[_][]const u8{fileName,".old"});
    defer std.testing.allocator.free(newFileName);
 
     try std.fs.cwd().rename(fileName, newFileName);
 }
 
 test "tryForEach with error" {
-    var it = fromSlice(&[_][]const u8{ "a.txt", "not_found", "b.txt" }).tryForEach( rename);
+    var it = fromSlice(&[_][]const u8{ "a.txt", "not_found", "b.txt" }).tryForEach(rename);
 
     try std.testing.expect(it.hasError());
     try std.testing.expectEqual(error.FileNotFound, it.err.?);
