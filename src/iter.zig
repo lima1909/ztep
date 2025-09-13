@@ -7,6 +7,7 @@ const FilterMap = @import("filter_map.zig").FilterMap;
 const Inspect = @import("inspect.zig").Inspect;
 const Map = @import("map.zig").Map;
 const Peekable = @import("peekable.zig").Peekable;
+const Result = @import("result.zig").Result;
 const Skip = @import("skip.zig").Skip;
 const StepBy = @import("stepby.zig").StepBy;
 const Take = @import("take.zig").Take;
@@ -171,6 +172,24 @@ pub fn Iterator(Iter: type) type {
             while (iter.next()) |item| {
                 forEachFn(item);
             }
+        }
+
+        /// An iterator method that applies a fallible function to each item in the iterator,
+        /// stopping at the first error and returning that error.
+        pub fn tryForEach(self: *const @This(), forEachFn: *const fn (Item) anyerror!void) Result(Iter, Item) {
+            var iter = &@constCast(self).iter;
+
+            while (iter.next()) |item| {
+                forEachFn(item) catch |err| {
+                    return Result(Iter, Item){
+                        .err = err,
+                        .err_item = item,
+                        .iter = iter,
+                    };
+                };
+            }
+
+            return Result(Iter, Item){ .iter = iter };
         }
 
         /// Searches for an element of an iterator that satisfies a predicate.

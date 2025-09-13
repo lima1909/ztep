@@ -459,6 +459,58 @@ test "from slice forEach" {
         .forEach(forEachFn);
 }
 
+test "from slice tryForEach" {
+    var it = fromSlice(&[_][]const u8{ "./src/iter.zig", "./src/tests.zig" })
+        .enumerate()
+        .tryForEach(
+        struct {
+            fn openFiles(file: struct { usize, []const u8 }) !void {
+                _ = try std.fs.cwd().openFile(file[1], .{});
+            }
+        }.openFiles,
+    );
+
+    try std.testing.expect(!it.hasError());
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "from slice tryForEach with error" {
+    var it = fromSlice(&[_][]const u8{ "not_found", "./src/tests.zig" })
+        .tryForEach(
+        struct {
+            fn rename(fileName: []const u8) !void {
+                const newFileName = try std.mem.concat(std.testing.allocator, u8, &[_][]const u8{ fileName, ".old" });
+                defer std.testing.allocator.free(newFileName);
+
+                try std.fs.cwd().rename(fileName, newFileName);
+            }
+        }.rename,
+    );
+
+    try std.testing.expect(it.hasError());
+    try std.testing.expectEqual(error.FileNotFound, it.err.?);
+    try std.testing.expectEqual("not_found", it.err_item.?);
+
+    try std.testing.expectEqual("./src/tests.zig", it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+
+test "from slice tryForEach with error extend" {
+    const item = fromSlice(&[_][]const u8{ "./src/iter.zig", "not_found", "./src/tests.zig" })
+        .enumerate()
+        .tryForEach(
+            struct {
+                fn openFiles(file: struct { usize, []const u8 }) !void {
+                    _ = try std.fs.cwd().openFile(file[1], .{});
+                }
+            }.openFiles,
+        )
+        .extend()
+        .last();
+
+    try std.testing.expectEqual(.{ 2, "./src/tests.zig" }, item.?);
+}
+
 test "last" {
     var it = extend(std.mem.tokenizeScalar(u8, "a BB ccc dd e fff", ' '))
         .map(u8, firstChar)

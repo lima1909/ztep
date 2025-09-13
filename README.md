@@ -130,4 +130,30 @@ test "iterator with error" {
 | `take`           | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
 | `tryCollect`     | Collects all the items from an iterator into a given  buffer.                                          |
 | `tryCollectInto` | Collects all the items from an iterator into a given collection.                                       |
+| `tryForEach`     | An iterator method that applies a fallible function to each item and stopping at the first error.      |
 | `zip`            | Zips up’ two iterators into a single iterator of pairs.                                                |
+
+
+### More examples
+
+Try to rename all files from a given list, with `tryForEach`.
+
+```zig
+fn rename(fileName: []const u8) !void {
+   const newFileName = try std.mem.concat(std.testing.allocator, u8, &[_][]const u8{ fileName, ".old" });
+   defer std.testing.allocator.free(newFileName);
+
+    try std.fs.cwd().rename(fileName, newFileName);
+}
+
+test "tryForEach with error" {
+    var it = fromSlice(&[_][]const u8{ "a.txt", "not_found", "b.txt" }).tryForEach( rename);
+
+    try std.testing.expect(it.hasError());
+    try std.testing.expectEqual(error.FileNotFound, it.err.?);
+    try std.testing.expectEqual("not_found", it.err_item.?);
+
+    try std.testing.expectEqual("b.txt", it.next().?);
+    try std.testing.expectEqual(null, it.next());
+}
+```
