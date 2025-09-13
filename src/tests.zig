@@ -400,6 +400,37 @@ test "from slice with take count" {
     }
 }
 
+test "takeWhile" {
+    {
+        var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+            .map(u8, firstChar)
+            .takeWhile(std.ascii.isLower);
+
+        try std.testing.expectEqual('x', it.next().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+            .take(2)
+            .map(u8, firstChar)
+            .takeWhile(std.ascii.isLower);
+
+        try std.testing.expectEqual('x', it.next().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+            .take(2)
+            .map(u8, firstChar)
+            .takeWhile(std.ascii.isLower);
+
+        try std.testing.expectEqual(1, it.count());
+        try std.testing.expectEqual(null, it.next());
+    }
+}
+
 test "from slice try collect" {
     var buffer: [7]u8 = undefined;
     const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })

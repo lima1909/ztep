@@ -1,12 +1,14 @@
 <div align="center">
 
-# ZTEP is an extension for Iterators written in ⚡ZIG ⚡.
+# ztep
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/lima1909/ztep/ci.yaml?style=for-the-badge)](https://github.com/lima1909/ztep/actions)
 ![License](https://img.shields.io/github/license/lima1909/ztep?style=for-the-badge)
 [![Stars](https://img.shields.io/github/stars/lima1909/ztep?style=for-the-badge)](https://github.com/lima1909/ztep/stargazers)
 
 </div>
+
+`Ztep` is an Iterator library written in ⚡ZIG ⚡.
 
 It is heavily inspired by the iterators in the Rust standard library [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html).
 This also includes **optimizations** for special iterators, such as for `arrays`, where it is easy to jump to a specific item (position).
@@ -106,30 +108,31 @@ test "iterator with error" {
 
 #### The following iterators are available: 
 
-| Iterators        | Description                                                                                            |
-|------------------|--------------------------------------------------------------------------------------------------------|
-| `chain`          | Takes two iterators and creates a new iterator over both in sequence.                                  |
-| `count`          | Consumes the iterator, counting the number of iterations and returning it.                             |
-| `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                 |
-| `filter`         | Creates an iterator which uses a function to determine if an element should be yielded.                |
-| `filterMap`      | Creates an iterator that both filters and maps in one call.                                            |
-| `find`           | Searches for an element of an iterator that satisfies a predicate.                                     |
-| `fold`           | Folds every element into an accumulator by applying an operation, returning the final result.          |
-| `forEach`        | Calls a function fn(Item) on each element of an iterator.                                              |
-| `inspect`        | This iterator do nothing, the purpose is for debugging.                                                |
-| `last`           | Calls a function fn(Item) on each element of an iterator.                                              |
-| `map`            | Transforms one iterator into another by a given mapping function.                                      |
-| `nth`            | Consumes the iterator, returning the nth element.                                                      |
-| `peekable`       | Creates an iterator which can use the peek methods to look at the next element without consuming it.   |
-| `reduce`         | Reduces the elements to a single one, by repeatedly applying a reducing function.                      |
-| `reset`          | Reset the Base-Iterator, if the Iterator supports it.                                                  |
-| `skip`           | Creates an iterator that skips the first n elements.                                                   |
-| `stepBy`         | Creates an iterator starting at the same point, but stepping by the given amount at each iteration.    |
-| `take`           | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner. |
-| `tryCollect`     | Collects all the items from an iterator into a given  buffer.                                          |
-| `tryCollectInto` | Collects all the items from an iterator into a given collection.                                       |
-| `tryForEach`     | An iterator method that applies a fallible function to each item and stopping at the first error.      |
-| `zip`            | Zips up’ two iterators into a single iterator of pairs.                                                |
+| Iterators        | Description                                                                                              |
+|------------------|----------------------------------------------------------------------------------------------------------|
+| `chain`          | Takes two iterators and creates a new iterator over both in sequence.                                    |
+| `count`          | Consumes the iterator, counting the number of iterations and returning it.                               |
+| `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                   |
+| `filter`         | Creates an iterator which uses a function to determine if an element should be yielded.                  |
+| `filterMap`      | Creates an iterator that both filters and maps in one call.                                              |
+| `find`           | Searches for an element of an iterator that satisfies a predicate.                                       |
+| `fold`           | Folds every element into an accumulator by applying an operation, returning the final result.            |
+| `forEach`        | Calls a function fn(Item) on each element of an iterator.                                                |
+| `inspect`        | This iterator do nothing, the purpose is for debugging.                                                  |
+| `last`           | Calls a function fn(Item) on each element of an iterator.                                                |
+| `map`            | Transforms one iterator into another by a given mapping function.                                        |
+| `nth`            | Consumes the iterator, returning the nth element.                                                        |
+| `peekable`       | Creates an iterator which can use the peek methods to look at the next element without consuming it.     |
+| `reduce`         | Reduces the elements to a single one, by repeatedly applying a reducing function.                        |
+| `reset`          | Reset the Base-Iterator, if the Iterator supports it.                                                    |
+| `skip`           | Creates an iterator that skips the first n elements.                                                     |
+| `stepBy`         | Creates an iterator starting at the same point, but stepping by the given amount at each iteration.      |
+| `take`           | Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.   |
+| `takeWHile`      | Creates an iterator which calls the predicate on each element, and yield elements while it returns true. |
+| `tryCollect`     | Collects all the items from an iterator into a given  buffer.                                            |
+| `tryCollectInto` | Collects all the items from an iterator into a given collection.                                         |
+| `tryForEach`     | An iterator method that applies a fallible function to each item and stopping at the first error.        |
+| `zip`            | Zips up’ two iterators into a single iterator of pairs.                                                  |
 
 
 ### More examples
@@ -153,5 +156,19 @@ test "tryForEach with error" {
 
     try std.testing.expectEqual("b.txt", it.next().?);
     try std.testing.expectEqual(null, it.next());
+}
+```
+
+You can stop the iterations, with `takeWhile` and the given `predicate`.
+
+```zig
+test "takeWhile" {
+   // stop the iteration, if the letter is upper case
+   var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .map(u8, firstChar)
+        .takeWhile(std.ascii.isLower); 
+
+   try std.testing.expectEqual('x', it.next().?);
+   try std.testing.expectEqual(null, it.next());
 }
 ```

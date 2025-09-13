@@ -11,6 +11,7 @@ const Result = @import("result.zig").Result;
 const Skip = @import("skip.zig").Skip;
 const StepBy = @import("stepby.zig").StepBy;
 const Take = @import("take.zig").Take;
+const TakeWhile = @import("take_while.zig").TakeWhile;
 const Zip = @import("zip.zig").Zip;
 
 /// Create a Wrapper (extension) for the given Iterator.
@@ -58,6 +59,12 @@ pub fn Iterator(Iter: type) type {
         /// Creates an iterator that both filters and maps in one call.
         pub fn filterMap(self: *const @This(), To: type, filterMapFn: *const fn (Item) ?To) Iterator(FilterMap(Iter, Item, To)) {
             return .{ .iter = .init(&@constCast(self).iter, filterMapFn) };
+        }
+
+        /// Creates an iterator which calls the predicate on each element, and yield elements while it returns true.
+        /// So you can stop the iteration.
+        pub fn takeWhile(self: *const @This(), predicate: *const fn (Item) bool) Iterator(TakeWhile(Iter, Item)) {
+            return .{ .iter = .init(&@constCast(self).iter, predicate) };
         }
 
         /// Creates an iterator which gives the current iteration count as well as the next value.
