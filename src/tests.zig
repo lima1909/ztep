@@ -366,6 +366,40 @@ test "from slice with take" {
     try std.testing.expectEqual(null, it.next());
 }
 
+test "from slice with take count" {
+    {
+        var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" }).take(0);
+
+        try std.testing.expectEqual(0, it.count());
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" }).take(2);
+
+        try std.testing.expectEqual(2, it.count());
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        // n > iter.length,
+        var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" }).take(100);
+
+        try std.testing.expectEqual(3, it.count());
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+            .take(2)
+            .map(u8, firstChar)
+            .filter(std.ascii.isLower);
+
+        try std.testing.expectEqual(1, it.count());
+        try std.testing.expectEqual(null, it.next());
+    }
+}
+
 test "from slice try collect" {
     var buffer: [7]u8 = undefined;
     const n = try fromSlice(&[_][]const u8{ "x", "BB", "ccc", "dd", "e", "fff" })

@@ -1,6 +1,6 @@
 <div align="center">
 
-# ZTEP 
+# ZTEP is an extension for Iterators written in ⚡ZIG ⚡.
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/lima1909/ztep/ci.yaml?style=for-the-badge)](https://github.com/lima1909/ztep/actions)
 ![License](https://img.shields.io/github/license/lima1909/ztep?style=for-the-badge)
@@ -8,10 +8,7 @@
 
 </div>
 
-`ztep` is an extension for Iterators written in ⚡ZIG ⚡.
-
 It is heavily inspired by the iterators in the Rust standard library [std::iter::Iterator](https://doc.rust-lang.org/std/iter/trait.Iterator.html).
-
 This also includes **optimizations** for special iterators, such as for `arrays`, where it is easy to jump to a specific item (position).
 
 #### Supported zig-versions:
@@ -141,7 +138,7 @@ Try to rename all files from a given list, with `tryForEach`.
 
 ```zig
 fn rename(fileName: []const u8) !void {
-   const newFileName = try std.mem.concat(std.testing.allocator, u8, &[_][]const u8{fileName,".old"});
+   const newFileName = try std.mem.concat(std.testing.allocator,u8,&[_][]const u8{fileName,".old"});
    defer std.testing.allocator.free(newFileName);
 
     try std.fs.cwd().rename(fileName, newFileName);
