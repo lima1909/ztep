@@ -1,5 +1,6 @@
 const std = @import("std");
 
+const ArrayChunks = @import("array_chunks.zig").ArrayChunks;
 const Chain = @import("chain.zig").Chain;
 const Enumerate = @import("enumerate.zig").Enumerate;
 const Filter = @import("filter.zig").Filter;
@@ -65,6 +66,13 @@ pub fn Iterator(Iter: type) type {
         /// So you can stop the iteration.
         pub fn takeWhile(self: *const @This(), predicate: *const fn (Item) bool) Iterator(TakeWhile(Iter, Item)) {
             return .{ .iter = .init(&@constCast(self).iter, predicate) };
+        }
+
+        /// Returns an iterator over N elements of the iterator at a time.
+        /// The chunks do not overlap. If N does not divide the length of the iterator, then the last up to N-1 elements
+        /// will be omitted and can be retrieved from the .remainder field of the iterator.
+        pub fn arrayChunks(self: *const @This(), comptime n: usize) Iterator(ArrayChunks(Iter, Item, n)) {
+            return .{ .iter = .init(&@constCast(self).iter) };
         }
 
         /// Creates an iterator which gives the current iteration count as well as the next value.

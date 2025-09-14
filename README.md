@@ -110,6 +110,7 @@ test "iterator with error" {
 
 | Iterators        | Description                                                                                              |
 |------------------|----------------------------------------------------------------------------------------------------------|
+| `arrayChunks`    | Create iterator, which iterate over an chunk of items.                                    |
 | `chain`          | Takes two iterators and creates a new iterator over both in sequence.                                    |
 | `count`          | Consumes the iterator, counting the number of iterations and returning it.                               |
 | `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                   |
@@ -170,5 +171,24 @@ test "takeWhile" {
 
    try std.testing.expectEqual('x', it.next().?);
    try std.testing.expectEqual(null, it.next());
+}
+```
+
+You can iterate not only in one step, but also in chunks: `arrayChunks`.
+
+```zig
+test "arrayChunks with filter and map" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "d" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .arrayChunks(2);
+
+    try std.testing.expectEqualDeep([_]u8{ 'x', 'c' }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+    // the remainder is 'd'
+    try std.testing.expectEqual([_]?u8{ 'd', null }, it.iter.remainder);
+
+    it.reset();
+    try std.testing.expectEqual(1, it.count());
 }
 ```

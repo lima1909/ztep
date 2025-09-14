@@ -1092,3 +1092,31 @@ test "reset slice peekable" {
     try std.testing.expectEqual(.{ 0, 'x' }, it.peek().?);
     try std.testing.expectEqual(.{ 0, 'x' }, it.next().?);
 }
+
+test "arrayChunks" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .arrayChunks(2);
+
+    try std.testing.expectEqualDeep([_][]const u8{ "x", "BB" }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqualDeep([_]?[]const u8{ "ccc", null }, it.iter.remainder);
+
+    it.reset();
+    try std.testing.expectEqual(1, it.count());
+    try std.testing.expectEqual(0, it.count());
+}
+
+test "arrayChunks filter and map" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
+        .map(u8, firstChar)
+        .filter(std.ascii.isLower)
+        .arrayChunks(2);
+
+    try std.testing.expectEqualDeep([_]u8{ 'x', 'c' }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.iter.remainder);
+
+    it.reset();
+    try std.testing.expectEqual(1, it.count());
+    try std.testing.expectEqual(0, it.count());
+}
