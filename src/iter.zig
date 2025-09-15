@@ -62,6 +62,11 @@ pub fn Iterator(Iter: type) type {
             return .{ .iter = .init(&@constCast(self).iter, filterMapFn) };
         }
 
+        /// Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
+        pub fn take(self: *const @This(), n: usize) Iterator(Take(Iter, Item)) {
+            return .{ .iter = .init(&@constCast(self).iter, n) };
+        }
+
         /// Creates an iterator which calls the predicate on each element, and yield elements while it returns true.
         /// So you can stop the iteration.
         pub fn takeWhile(self: *const @This(), predicate: *const fn (Item) bool) Iterator(TakeWhile(Iter, Item)) {
@@ -115,11 +120,6 @@ pub fn Iterator(Iter: type) type {
 
         /// Creates an iterator that skips the first n elements.
         pub fn skip(self: *const @This(), n: usize) Iterator(Skip(Iter, Item)) {
-            return .{ .iter = .init(&@constCast(self).iter, n) };
-        }
-
-        /// Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
-        pub fn take(self: *const @This(), n: usize) Iterator(Take(Iter, Item)) {
             return .{ .iter = .init(&@constCast(self).iter, n) };
         }
 

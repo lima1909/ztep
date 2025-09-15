@@ -1106,17 +1106,70 @@ test "arrayChunks" {
     try std.testing.expectEqual(0, it.count());
 }
 
+test "arrayChunks count" {
+    var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "d", "e", "f", "g" })
+        .arrayChunks(3);
+
+    try std.testing.expectEqualDeep([_][]const u8{ "x", "BB", "ccc" }, it.next().?);
+    try std.testing.expectEqual(1, it.count());
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqualDeep([_]?[]const u8{ "g", null, null }, it.iter.remainder);
+
+    it.reset();
+    try std.testing.expectEqual(2, it.count());
+    try std.testing.expectEqual(0, it.count());
+}
+
 test "arrayChunks filter and map" {
     var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc" })
         .map(u8, firstChar)
         .filter(std.ascii.isLower)
-        .arrayChunks(2);
+        .arrayChunks(2)
+        .enumerate();
 
-    try std.testing.expectEqualDeep([_]u8{ 'x', 'c' }, it.next().?);
+    try std.testing.expectEqualDeep(.{ 0, [2]u8{ 'x', 'c' } }, it.next().?);
     try std.testing.expectEqual(null, it.next());
-    try std.testing.expectEqual(null, it.iter.remainder);
+    try std.testing.expectEqual(null, it.iter.iter.remainder);
 
     it.reset();
     try std.testing.expectEqual(1, it.count());
+    try std.testing.expectEqual(0, it.count());
+}
+
+test "arrayChunks map" {
+    {
+        var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "d", "z" })
+            .take(5)
+            .map(u8, firstChar)
+            .arrayChunks(2);
+
+        try std.testing.expectEqual([2]u8{ 'x', 'B' }, it.next().?);
+        try std.testing.expectEqual([2]u8{ 'c', 'd' }, it.next().?);
+        try std.testing.expectEqual(null, it.next());
+        try std.testing.expectEqual(0, it.count());
+        try std.testing.expectEqual([2]?u8{ 'z', null }, it.iter.remainder);
+    }
+
+    {
+        var it = fromSlice(&[_][]const u8{ "x", "BB", "ccc", "d", "z" })
+            .take(5)
+            .map(u8, firstChar)
+            .arrayChunks(2);
+
+        try std.testing.expectEqual(2, it.count());
+        try std.testing.expectEqual(0, it.count());
+    }
+}
+
+test "optional string slice" {
+    var it = fromSlice(&[_]?[]const u8{ "x", "b", null, "d" });
+    try std.testing.expectEqualStrings("x", it.next().?.?);
+    try std.testing.expectEqualStrings("b", it.next().?.?);
+    try std.testing.expectEqual(null, it.next().?);
+    try std.testing.expectEqualStrings("d", it.next().?.?);
+    try std.testing.expectEqual(null, it.next());
+
+    it.reset();
+    try std.testing.expectEqual(4, it.count());
     try std.testing.expectEqual(0, it.count());
 }

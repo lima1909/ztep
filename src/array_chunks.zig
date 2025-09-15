@@ -2,6 +2,8 @@ const std = @import("std");
 const Iterator = @import("iter.zig").Iterator;
 
 pub fn ArrayChunks(Iter: type, Item: type, comptime n: usize) type {
+    if (n == 0) @compileError("n must be greater then 0");
+
     return struct {
         iter: *Iter,
         remainder: ?[n]?Item = null,
@@ -38,10 +40,6 @@ pub fn ArrayChunks(Iter: type, Item: type, comptime n: usize) type {
         pub fn reset(self: *@This()) void {
             return self.parent.reset();
         }
-
-        pub fn count(self: *@This()) usize {
-            return @divTrunc(self.parent.count(), n);
-        }
     };
 }
 
@@ -54,9 +52,6 @@ test "arrayChunks 1" {
     try std.testing.expectEqualDeep([_][]const u8{"ccc"}, it.next().?);
     try std.testing.expectEqual(null, it.next());
     try std.testing.expectEqual(null, it.remainder);
-
-    it.reset();
-    try std.testing.expectEqual(3, it.count());
 }
 
 test "arrayChunks 2" {
@@ -66,42 +61,21 @@ test "arrayChunks 2" {
     try std.testing.expectEqualDeep([_][]const u8{ "x", "BB" }, it.next().?);
     try std.testing.expectEqual(null, it.next());
     try std.testing.expectEqualDeep([_]?[]const u8{ "ccc", null }, it.remainder);
-
-    it.reset();
-    try std.testing.expectEqual(1, it.count());
 }
 
 test "arrayChunks 3" {
-    {
-        var tokensIt = std.mem.tokenizeScalar(u8, "x BB ccc", ' ');
-        var it = ArrayChunks(@TypeOf(tokensIt), []const u8, 3).init(&tokensIt);
+    var tokensIt = std.mem.tokenizeScalar(u8, "x BB ccc", ' ');
+    var it = ArrayChunks(@TypeOf(tokensIt), []const u8, 3).init(&tokensIt);
 
-        try std.testing.expectEqualDeep([_][]const u8{ "x", "BB", "ccc" }, it.next().?);
-        try std.testing.expectEqual(null, it.next());
-        try std.testing.expectEqual(null, it.remainder);
-    }
-
-    {
-        var tokensIt = std.mem.tokenizeScalar(u8, "x BB ccc", ' ');
-        var it = ArrayChunks(@TypeOf(tokensIt), []const u8, 3).init(&tokensIt);
-
-        try std.testing.expectEqual(1, it.count());
-    }
+    try std.testing.expectEqualDeep([_][]const u8{ "x", "BB", "ccc" }, it.next().?);
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqual(null, it.remainder);
 }
 
 test "arrayChunks 4" {
-    {
-        var tokensIt = std.mem.tokenizeScalar(u8, "x BB ccc", ' ');
-        var it = ArrayChunks(@TypeOf(tokensIt), []const u8, 4).init(&tokensIt);
+    var tokensIt = std.mem.tokenizeScalar(u8, "x BB ccc", ' ');
+    var it = ArrayChunks(@TypeOf(tokensIt), []const u8, 4).init(&tokensIt);
 
-        try std.testing.expectEqual(null, it.next());
-        try std.testing.expectEqualDeep([_]?[]const u8{ "x", "BB", "ccc", null }, it.remainder);
-    }
-
-    {
-        var tokensIt = std.mem.tokenizeScalar(u8, "x BB ccc", ' ');
-        var it = ArrayChunks(@TypeOf(tokensIt), []const u8, 4).init(&tokensIt);
-
-        try std.testing.expectEqual(0, it.count());
-    }
+    try std.testing.expectEqual(null, it.next());
+    try std.testing.expectEqualDeep([_]?[]const u8{ "x", "BB", "ccc", null }, it.remainder);
 }
