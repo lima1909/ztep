@@ -4,14 +4,12 @@ const Iterator = @import("iter.zig").Iterator;
 pub fn StepBy(Iter: type, Item: type) type {
     return struct {
         iter: *Iter,
-        parent: *Iterator(Iter),
         step_minus_one: usize,
         first_take: bool = true,
 
         pub fn init(iter: *Iter, step: usize) @This() {
             return .{
                 .iter = iter,
-                .parent = @fieldParentPtr("iter", iter),
                 .step_minus_one = if (step == 0) 0 else step - 1,
             };
         }
@@ -21,7 +19,8 @@ pub fn StepBy(Iter: type, Item: type) type {
             const step_size = if (self.first_take) 0 else self.step_minus_one;
             self.first_take = false;
 
-            return self.parent.nth(step_size);
+            var parent: *Iterator(Iter) = @fieldParentPtr("iter", self.iter);
+            return parent.nth(step_size);
         }
     };
 }

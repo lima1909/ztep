@@ -1163,6 +1163,7 @@ test "arrayChunks map" {
 
 test "optional string slice" {
     var it = fromSlice(&[_]?[]const u8{ "x", "b", null, "d" });
+
     try std.testing.expectEqualStrings("x", it.next().?.?);
     try std.testing.expectEqualStrings("b", it.next().?.?);
     try std.testing.expectEqual(null, it.next().?);
@@ -1172,4 +1173,67 @@ test "optional string slice" {
     it.reset();
     try std.testing.expectEqual(4, it.count());
     try std.testing.expectEqual(0, it.count());
+}
+
+const Alternate = struct {
+    state: i32 = 1,
+
+    pub fn next(self: *Alternate) ?i32 {
+        const val = self.state;
+        self.state = self.state + 1;
+
+        if (@rem(val, 3) == 0) return null;
+        return val;
+    }
+
+    pub fn reset(self: *@This()) void {
+        self.state = 1;
+    }
+};
+
+test "no fuse" {
+    {
+        var it = extend(Alternate{});
+
+        try std.testing.expectEqual(1, it.next().?);
+        try std.testing.expectEqual(2, it.next().?);
+        try std.testing.expectEqual(null, it.next());
+        try std.testing.expectEqual(4, it.next().?);
+        try std.testing.expectEqual(5, it.next().?);
+        try std.testing.expectEqual(null, it.next());
+        try std.testing.expectEqual(7, it.next().?);
+        try std.testing.expectEqual(8, it.next().?);
+        try std.testing.expectEqual(null, it.next());
+
+        it.reset();
+        try std.testing.expectEqual(1, it.next().?);
+        try std.testing.expectEqual(2, it.next().?);
+        try std.testing.expectEqual(null, it.next());
+    }
+}
+
+test "fuse" {
+    {
+        var it = extend(Alternate{}).fuse();
+
+        try std.testing.expectEqual(1, it.next().?);
+        try std.testing.expectEqual(2, it.next().?);
+        try std.testing.expectEqual(null, it.next());
+        try std.testing.expectEqual(null, it.next());
+        try std.testing.expectEqual(null, it.next());
+    }
+
+    {
+        var it = extend(Alternate{}).fuse();
+        try std.testing.expectEqual(2, it.count());
+        try std.testing.expectEqual(0, it.count());
+    }
+
+    {
+        var it = extend(Alternate{}).fuse();
+        try std.testing.expectEqual(1, it.next().?);
+        try std.testing.expectEqual(1, it.count());
+        try std.testing.expectEqual(null, it.next());
+        try std.testing.expectEqual(0, it.count());
+    }
 }

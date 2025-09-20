@@ -110,7 +110,7 @@ test "iterator with error" {
 
 | Iterators        | Description                                                                                              |
 |------------------|----------------------------------------------------------------------------------------------------------|
-| `arrayChunks`    | Create iterator, which iterate over an chunk of items.                                    |
+| `arrayChunks`    | Create iterator, which iterate over an chunk of items.                                                   |
 | `chain`          | Takes two iterators and creates a new iterator over both in sequence.                                    |
 | `count`          | Consumes the iterator, counting the number of iterations and returning it.                               |
 | `enumerate`      | Creates an iterator which gives the current iteration count as well as the next value.                   |
@@ -119,6 +119,7 @@ test "iterator with error" {
 | `find`           | Searches for an element of an iterator that satisfies a predicate.                                       |
 | `fold`           | Folds every element into an accumulator by applying an operation, returning the final result.            |
 | `forEach`        | Calls a function fn(Item) on each element of an iterator.                                                |
+| `fuse`           | Creates an iterator which ends after the first `null`.                                                   |
 | `inspect`        | This iterator do nothing, the purpose is for debugging.                                                  |
 | `last`           | Calls a function fn(Item) on each element of an iterator.                                                |
 | `map`            | Transforms one iterator into another by a given mapping function.                                        |

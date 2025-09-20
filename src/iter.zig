@@ -5,6 +5,7 @@ const Chain = @import("chain.zig").Chain;
 const Enumerate = @import("enumerate.zig").Enumerate;
 const Filter = @import("filter.zig").Filter;
 const FilterMap = @import("filter_map.zig").FilterMap;
+const Fuse = @import("fuse.zig").Fuse;
 const Inspect = @import("inspect.zig").Inspect;
 const Map = @import("map.zig").Map;
 const Peekable = @import("peekable.zig").Peekable;
@@ -49,40 +50,45 @@ pub fn Iterator(Iter: type) type {
 
         /// Transforms one iterator into another by a given mapping function.
         pub fn map(self: *const @This(), To: type, mapFn: *const fn (Item) To) Iterator(Map(Iter, Item, To)) {
-            return .{ .iter = .init(&@constCast(self).iter, mapFn) };
+            return .{ .iter = .{ .iter = &@constCast(self).iter, .mapFn = mapFn } };
         }
 
         /// Creates an iterator which uses a function to determine if an element should be yielded.
         pub fn filter(self: *const @This(), filterFn: *const fn (Item) bool) Iterator(Filter(Iter, Item)) {
-            return .{ .iter = .init(&@constCast(self).iter, filterFn) };
+            return .{ .iter = .{ .iter = &@constCast(self).iter, .filterFn = filterFn } };
         }
 
         /// Creates an iterator that both filters and maps in one call.
         pub fn filterMap(self: *const @This(), To: type, filterMapFn: *const fn (Item) ?To) Iterator(FilterMap(Iter, Item, To)) {
-            return .{ .iter = .init(&@constCast(self).iter, filterMapFn) };
+            return .{ .iter = .{ .iter = &@constCast(self).iter, .filterMapFn = filterMapFn } };
         }
 
         /// Creates an iterator that yields the first n elements, or fewer if the underlying iterator ends sooner.
         pub fn take(self: *const @This(), n: usize) Iterator(Take(Iter, Item)) {
-            return .{ .iter = .init(&@constCast(self).iter, n) };
+            return .{ .iter = .{ .iter = &@constCast(self).iter, .n = n } };
         }
 
         /// Creates an iterator which calls the predicate on each element, and yield elements while it returns true.
         /// So you can stop the iteration.
         pub fn takeWhile(self: *const @This(), predicate: *const fn (Item) bool) Iterator(TakeWhile(Iter, Item)) {
-            return .{ .iter = .init(&@constCast(self).iter, predicate) };
+            return .{ .iter = .{ .iter = &@constCast(self).iter, .predicate = predicate } };
         }
 
         /// Returns an iterator over N elements of the iterator at a time.
         /// The chunks do not overlap. If N does not divide the length of the iterator, then the last up to N-1 elements
         /// will be omitted and can be retrieved from the .remainder field of the iterator.
         pub fn arrayChunks(self: *const @This(), comptime n: usize) Iterator(ArrayChunks(Iter, Item, n)) {
-            return .{ .iter = .init(&@constCast(self).iter) };
+            return .{ .iter = .{ .iter = &@constCast(self).iter } };
+        }
+
+        /// Creates an iterator which ends after the first `null`.
+        pub fn fuse(self: *const @This()) Iterator(Fuse(Iter, Item)) {
+            return .{ .iter = .{ .iter = &@constCast(self).iter } };
         }
 
         /// Creates an iterator which gives the current iteration count as well as the next value.
         pub fn enumerate(self: *const @This()) Iterator(Enumerate(Iter, Item)) {
-            return .{ .iter = .init(&@constCast(self).iter) };
+            return .{ .iter = .{ .iter = &@constCast(self).iter } };
         }
 
         /// This iterator do nothing, the purpose is for debugging.
@@ -93,7 +99,7 @@ pub fn Iterator(Iter: type) type {
         ///     }
         /// }.print)
         pub fn inspect(self: *const @This(), inspectFn: *const fn (Item) Item) Iterator(Inspect(Iter, Item)) {
-            return .{ .iter = .init(&@constCast(self).iter, inspectFn) };
+            return .{ .iter = .{ .iter = &@constCast(self).iter, .inspectFn = inspectFn } };
         }
 
         /// Folds every element into an accumulator by applying an operation, returning the final result.

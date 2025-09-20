@@ -4,15 +4,7 @@ const Iterator = @import("iter.zig").Iterator;
 pub fn Enumerate(Iter: type, Item: type) type {
     return struct {
         iter: *Iter,
-        parent: *Iterator(Iter),
         index: usize = 0,
-
-        pub fn init(iter: *Iter) @This() {
-            return .{
-                .iter = iter,
-                .parent = @fieldParentPtr("iter", iter),
-            };
-        }
 
         pub fn next(self: *@This()) ?struct { usize, Item } {
             const item = self.iter.next() orelse return null;
@@ -22,18 +14,20 @@ pub fn Enumerate(Iter: type, Item: type) type {
 
         pub fn reset(self: *@This()) void {
             self.index = 0;
-            return self.parent.reset();
+            var parent: *Iterator(Iter) = @fieldParentPtr("iter", self.iter);
+            return parent.reset();
         }
 
         pub fn count(self: *@This()) usize {
-            return self.parent.count();
+            var parent: *Iterator(Iter) = @fieldParentPtr("iter", self.iter);
+            return parent.count();
         }
     };
 }
 
 test "enumerate" {
     var tokensIt = std.mem.tokenizeScalar(u8, "x BB ccc", ' ');
-    var it = Enumerate(@TypeOf(tokensIt), []const u8).init(&tokensIt);
+    var it = Enumerate(@TypeOf(tokensIt), []const u8){ .iter = &tokensIt };
 
     try std.testing.expectEqualDeep(.{ 0, "x" }, it.next().?);
     try std.testing.expectEqualDeep(.{ 1, "BB" }, it.next().?);
